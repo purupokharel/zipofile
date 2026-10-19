@@ -1,0 +1,370 @@
+{
+  "$comment": "Shared by tests/excludes.test.ts (web rules + handle walker) and src-tauri/src/lib.rs tests (real disk walk + zip). keep = files that must be in the archive; drop = files that must not.",
+  "scenarios": [
+    {
+      "stack": "Python",
+      "keep": [
+        "app/main.py",
+        "requirements.txt",
+        "pyproject.toml",
+        "env.py",
+        "config/env/settings.py",
+        ".env.example",
+        ".gitignore",
+        "notebooks/a.ipynb"
+      ],
+      "drop": [
+        ".venv/lib/python3.12/site-packages/x.py",
+        "venv/bin/python",
+        "env/pyvenv.cfg",
+        "env/lib/site.py",
+        "myvenv/pyvenv.cfg",
+        "myvenv/lib/y.py",
+        "app/__pycache__/main.cpython-312.pyc",
+        ".pytest_cache/v/cache",
+        ".mypy_cache/3.12/a.json",
+        ".ruff_cache/x",
+        ".tox/py312/log",
+        "pkg.egg-info/PKG-INFO",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".ipynb_checkpoints/a.ipynb"
+      ]
+    },
+    {
+      "stack": "Node / React",
+      "keep": [
+        "package.json",
+        "package-lock.json",
+        "src/index.tsx",
+        ".eslintrc.json",
+        ".prettierrc",
+        ".npmrc",
+        ".nvmrc",
+        ".editorconfig",
+        ".github/workflows/ci.yml",
+        ".husky/pre-commit",
+        "public/index.html",
+        "src/env/config.ts",
+        "bin/cli.js",
+        "scripts/build-icons.js"
+      ],
+      "drop": [
+        "node_modules/react/index.js",
+        "node_modules/.bin/vite",
+        "dist/index.js",
+        "build/static/main.js",
+        "coverage/lcov.info",
+        ".cache/x",
+        ".parcel-cache/y",
+        ".turbo/cookies",
+        ".nyc_output/out.json",
+        ".DS_Store",
+        "src/.DS_Store",
+        ".git/HEAD",
+        ".git/objects/ab/cdef"
+      ]
+    },
+    {
+      "stack": "Next.js",
+      "keep": [
+        "next.config.js",
+        "app/page.tsx",
+        "app/(marketing)/about/page.tsx"
+      ],
+      "drop": [
+        ".next/cache/webpack/a.pack",
+        ".next/server/app.js"
+      ]
+    },
+    {
+      "stack": "Vue / Nuxt / Svelte",
+      "keep": [
+        "nuxt.config.ts",
+        "pages/index.vue",
+        "src/App.svelte"
+      ],
+      "drop": [
+        ".nuxt/dist/a.js",
+        ".output/server/index.mjs",
+        ".svelte-kit/generated/root.js"
+      ]
+    },
+    {
+      "stack": "Swift / Xcode",
+      "keep": [
+        "Package.swift",
+        "Sources/App/main.swift",
+        "App.xcodeproj/project.pbxproj",
+        "Podfile",
+        "Podfile.lock"
+      ],
+      "drop": [
+        "DerivedData/Build/x.o",
+        ".build/debug/App",
+        ".swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata",
+        "Pods/Alamofire/Source/a.swift",
+        "Carthage/Build/x.framework/x"
+      ]
+    },
+    {
+      "stack": "Rust",
+      "keep": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "src/main.rs"
+      ],
+      "drop": [
+        "target/debug/app",
+        "target/release/build/x/out.rs"
+      ]
+    },
+    {
+      "stack": "Go",
+      "keep": [
+        "go.mod",
+        "go.sum",
+        "cmd/app/main.go",
+        "internal/vendor/notdeps.go"
+      ],
+      "drop": [
+        "vendor/modules.txt",
+        "vendor/github.com/pkg/errors/errors.go"
+      ]
+    },
+    {
+      "stack": "Java / Gradle / Android",
+      "keep": [
+        "build.gradle.kts",
+        "settings.gradle",
+        "gradlew",
+        "app/src/main/java/App.java",
+        "gradle/wrapper/gradle-wrapper.properties"
+      ],
+      "drop": [
+        ".gradle/8.0/fileHashes/a.bin",
+        "app/build/intermediates/x.dex",
+        ".kotlin/sessions/x",
+        "app/.cxx/a.o",
+        ".idea/workspace.xml"
+      ]
+    },
+    {
+      "stack": "Ruby",
+      "keep": [
+        "Gemfile",
+        "Gemfile.lock",
+        "app/models/user.rb",
+        "bin/rails",
+        "vendor/assets/javascripts/legacy.js"
+      ],
+      "drop": [
+        "vendor/bundle/ruby/3.3.0/gems/rack/lib/rack.rb",
+        ".bundle/config"
+      ]
+    },
+    {
+      "stack": "PHP",
+      "keep": [
+        "composer.json",
+        "composer.lock",
+        "src/Controller.php",
+        "public/index.php"
+      ],
+      "drop": [
+        "vendor/autoload.php",
+        "vendor/laravel/framework/src/x.php"
+      ]
+    },
+    {
+      "stack": ".NET",
+      "keep": [
+        "App.csproj",
+        "Program.cs",
+        "Properties/launchSettings.json"
+      ],
+      "drop": [
+        "bin/Debug/net8.0/App.dll",
+        "obj/project.assets.json"
+      ]
+    },
+    {
+      "stack": "Flutter / Dart",
+      "keep": [
+        "pubspec.yaml",
+        "pubspec.lock",
+        "lib/main.dart",
+        "android/app/build.gradle",
+        "ios/Runner/AppDelegate.swift"
+      ],
+      "drop": [
+        ".dart_tool/package_config.json",
+        "build/app/outputs/flutter-apk/app.apk",
+        "ios/Pods/Firebase/x.h",
+        "android/.gradle/x.bin"
+      ]
+    },
+    {
+      "stack": "Monorepo",
+      "keep": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "turbo.json",
+        "apps/web/src/page.tsx",
+        "packages/ui/src/button.tsx",
+        "apps/api/main.py"
+      ],
+      "drop": [
+        "apps/web/node_modules/next/index.js",
+        "apps/web/.next/cache/x",
+        "packages/ui/dist/index.js",
+        "apps/api/.venv/lib/x.py",
+        ".turbo/cache/x",
+        "node_modules/.pnpm/a/index.js"
+      ]
+    },
+    {
+      "stack": "Plain / mixed folder",
+      "keep": [
+        "Invoice March.pdf",
+        "photos/IMG_0001.jpg",
+        "notes/todo.md",
+        "bin/run.sh",
+        "obj/model.obj",
+        "env/README.md",
+        "vendor/contacts.csv",
+        "bundle/readme.txt",
+        ".hidden-notes.txt",
+        ".config/settings.toml"
+      ],
+      "drop": [
+        "Thumbs.db",
+        "desktop.ini"
+      ]
+    },
+    {
+      "stack": "Node.js",
+      "keep": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "yarn.lock",
+        "index.js",
+        "lib/server.js",
+        "test/server.test.js"
+      ],
+      "drop": [
+        "node_modules/express/index.js",
+        "node_modules/.package-lock.json",
+        "bower_components/jquery/jquery.js",
+        ".pnpm-store/v3/files/00/abc",
+        "coverage/lcov-report/index.html",
+        ".nyc_output/x.json",
+        "dist/index.js"
+      ]
+    },
+    {
+      "stack": "Nuxt",
+      "keep": [
+        "nuxt.config.ts",
+        "package.json",
+        "pages/index.vue",
+        "components/Header.vue",
+        "server/api/hello.ts"
+      ],
+      "drop": [
+        ".nuxt/types/imports.d.ts",
+        ".output/server/index.mjs",
+        ".output/public/_nuxt/entry.js",
+        "node_modules/nuxt/package.json",
+        "dist/index.html"
+      ]
+    },
+    {
+      "stack": "SvelteKit",
+      "keep": [
+        "svelte.config.js",
+        "vite.config.ts",
+        "package.json",
+        "src/routes/+page.svelte",
+        "src/lib/index.ts",
+        "static/favicon.png"
+      ],
+      "drop": [
+        ".svelte-kit/generated/root.svelte",
+        ".svelte-kit/output/client/app.js",
+        "build/index.js",
+        "node_modules/svelte/package.json"
+      ]
+    },
+    {
+      "stack": "Angular",
+      "keep": [
+        "angular.json",
+        "package.json",
+        "tsconfig.json",
+        "src/main.ts",
+        "src/app/app.component.ts",
+        "src/app/app.component.html"
+      ],
+      "drop": [
+        ".angular/cache/17.0.0/babel-webpack/a.json",
+        "dist/my-app/browser/main.js",
+        "node_modules/@angular/core/package.json",
+        "coverage/my-app/index.html"
+      ]
+    },
+    {
+      "stack": "Java (Maven)",
+      "keep": [
+        "pom.xml",
+        "mvnw",
+        "src/main/java/com/acme/App.java",
+        "src/test/java/com/acme/AppTest.java",
+        ".mvn/wrapper/maven-wrapper.properties"
+      ],
+      "drop": [
+        "target/classes/com/acme/App.class",
+        "target/app-1.0.jar",
+        "target/surefire-reports/x.txt",
+        ".idea/misc.xml"
+      ]
+    },
+    {
+      "stack": "Kotlin (Gradle)",
+      "keep": [
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle.properties",
+        "src/main/kotlin/Main.kt",
+        "gradle/libs.versions.toml"
+      ],
+      "drop": [
+        "build/classes/kotlin/main/MainKt.class",
+        ".gradle/8.5/checksums/x.bin",
+        ".kotlin/errors/x.log",
+        "build/libs/app.jar"
+      ]
+    },
+    {
+      "stack": "Android",
+      "keep": [
+        "build.gradle",
+        "settings.gradle",
+        "app/build.gradle",
+        "app/src/main/AndroidManifest.xml",
+        "app/src/main/java/com/acme/MainActivity.kt",
+        "app/src/main/res/layout/main.xml",
+        "app/proguard-rules.pro"
+      ],
+      "drop": [
+        "app/build/outputs/apk/debug/app-debug.apk",
+        "build/reports/x.html",
+        ".gradle/8.2/executionHistory/x.bin",
+        "app/.cxx/Debug/x.o",
+        "app/.externalNativeBuild/cmake/x",
+        "app/build/intermediates/dex/x.dex"
+      ]
+    }
+  ]
+}

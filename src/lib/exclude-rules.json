@@ -1,0 +1,30 @@
+{
+  "$comment": "Single source of truth for Zipofi exclusions. Used by the web app (src/lib/excludes.ts) and the desktop app (src-tauri/src/lib.rs via include_str!). Only directories that are re-creatable, non-portable dependency/cache/build trees belong here. Ambiguous names (env, vendor, bin, obj, bundle) are contextual so real source is not dropped.",
+  "version": 2,
+  "dirs": [
+    "node_modules", "bower_components", ".pnpm-store",
+    ".git", ".hg", ".svn",
+    ".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".tox", ".nox", ".ipynb_checkpoints", ".eggs", ".hypothesis",
+    ".vscode", ".idea",
+    "dist", "build", "coverage", ".nyc_output", ".cache", ".parcel-cache", ".turbo", ".nx",
+    ".next", ".nuxt", ".output", ".svelte-kit", ".expo", ".angular", ".docusaurus",
+    "target",
+    "DerivedData", ".swiftpm", ".build", "Pods", "Carthage",
+    ".gradle", ".kotlin", ".cxx", ".externalNativeBuild",
+    ".dart_tool", ".pub-cache",
+    ".terraform", ".serverless",
+    "elm-stuff", ".sass-cache"
+  ],
+  "dirSuffixes": [".egg-info"],
+  "venvMarker": "pyvenv.cfg",
+  "contextual": [
+    { "dir": "vendor", "why": "PHP Composer dependencies", "parentHasAny": ["composer.json"] },
+    { "dir": "vendor", "why": "Go module vendoring (re-creatable with go mod vendor)", "childHasAny": ["modules.txt"] },
+    { "dir": "bundle", "why": "Ruby vendor/bundle gems", "parentNamed": "vendor" },
+    { "dir": ".bundle", "why": "Ruby Bundler local state", "parentHasAny": ["Gemfile"] },
+    { "dir": "bin", "why": ".NET build output", "parentHasExt": [".csproj", ".fsproj", ".vbproj", ".sln"] },
+    { "dir": "obj", "why": ".NET intermediate output", "parentHasExt": [".csproj", ".fsproj", ".vbproj", ".sln"] }
+  ],
+  "files": [".DS_Store", "Thumbs.db", "desktop.ini"],
+  "secretEnvKeep": [".env.example", ".env.sample", ".env.template", ".env.dist"]
+}

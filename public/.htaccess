@@ -1,0 +1,19 @@
+# ZipoFile static site: serve files from disk; SPA fallback only when missing.
+<IfModule mod_mime.c>
+  AddType image/png .png
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "^og-image\.png$">
+    Header set Content-Type "image/png"
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+</IfModule>
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  RewriteRule . /index.html [L]
+</IfModule>

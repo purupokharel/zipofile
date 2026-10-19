@@ -1,0 +1,59 @@
+{
+  "$comment": "Shared by tests/skipList.test.ts and src-tauri/src/tests.rs. Paths are relative to the picked folder. Default rules still apply; keep/drop lists only use paths the defaults keep.",
+  "cases": [
+    {
+      "name": "bare name matches files and folders at any depth",
+      "patterns": ["logs"],
+      "keep": ["src/app.py", "src/logs.py", "catalog/x.txt"],
+      "drop": ["logs/a.txt", "src/logs/b.txt", "deep/er/logs", "deep/logs/x/y.txt"]
+    },
+    {
+      "name": "glob on names",
+      "patterns": ["*.pem", "secret-?.txt"],
+      "keep": ["a.pem.txt", "src/main.go", "secret-10.txt"],
+      "drop": ["kalshi.pem", "certs/ca.pem", "secret-1.txt", "a/b/secret-x.txt"]
+    },
+    {
+      "name": "rooted path skips only that path",
+      "patterns": ["dev-tools/launcher/runtime/forensics"],
+      "keep": ["dev-tools/launcher/run.py", "dev-tools/launcher/runtime/books.json", "other/dev-tools/launcher/runtime/forensics/a.json"],
+      "drop": ["dev-tools/launcher/runtime/forensics/a.json", "dev-tools/launcher/runtime/forensics/sub/b.json"]
+    },
+    {
+      "name": "leading slash anchors a bare name to the root",
+      "patterns": ["/data"],
+      "keep": ["src/data/x.csv", "data.txt"],
+      "drop": ["data/x.csv", "data/sub/y.csv"]
+    },
+    {
+      "name": "trailing slash means folders only",
+      "patterns": ["tmp/"],
+      "keep": ["src/tmp", "x/tmp"],
+      "drop": ["a/tmp/x.txt", "tmp/y.txt"]
+    },
+    {
+      "name": "double star spans folders",
+      "patterns": ["**/fixtures/*.bin", "assets/**/raw"],
+      "keep": ["fixtures/readme.md", "x/fixtures/a.txt", "assets/raw.txt"],
+      "drop": ["fixtures/a.bin", "x/y/fixtures/b.bin", "assets/raw/a.png", "assets/img/2024/raw/b.png"]
+    },
+    {
+      "name": "case-sensitive",
+      "patterns": ["Build.log"],
+      "keep": ["build.log", "x/BUILD.LOG"],
+      "drop": ["a/Build.log", "b/c/Build.log"]
+    },
+    {
+      "name": "comments and blanks ignored, commas split in the field",
+      "field": "# comment\n\n*.tmp, notes/\nscratch",
+      "keep": ["a.txt", "notes.md"],
+      "drop": ["a.tmp", "notes/n.md", "scratch", "x/scratch/y"]
+    }
+  ],
+  "invalid": ["../outside", "a/../b", "./a", "a//b", "C:/Users/x", "a\\b", "*", "**", "/", "**/**"],
+  "ignoreFile": {
+    "text": "# project-local\n*.log\n../nope\nbig/\n",
+    "keep": ["src/a.txt", ".zipofiignore", "big.txt"],
+    "drop": ["run.log", "src/x.log", "big/blob.bin"]
+  }
+}
