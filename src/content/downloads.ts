@@ -9,7 +9,7 @@ export const AUTO_APP_VERSION: string = version;
 export const APP_VERSION: string = version;
 /** Public site the desktop app opens for downloads (the app has no local /downloads). */
 export const SITE_ORIGIN = "https://zipofile.com";
-export const GITHUB_REPO_URL = "https://github.com/purupokharel/zipofile";
+export { ZIPOFILE_GITHUB_REPO as GITHUB_REPO_URL } from "../lib/safeUrl";
 
 export type DownloadItem =
   | { id: string; label: string; href: string; note: string; available: true }

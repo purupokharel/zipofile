@@ -22,3 +22,16 @@ export function safeAppPath(raw: string): string | null {
 }
 
 export const externalLinkRel = "noopener noreferrer" as const;
+
+/** Canonical public repo link for header/footer (https + fixed path only). */
+export const ZIPOFILE_GITHUB_REPO = "https://github.com/purupokharel/zipofile";
+
+export function safeGitHubRepoHref(raw: string = ZIPOFILE_GITHUB_REPO): string | null {
+  const href = safeExternalHref(raw);
+  if (!href) return null;
+  const u = new URL(href);
+  if (u.hostname !== "github.com") return null;
+  const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+  if (path !== "/purupokharel/zipofile") return null;
+  return ZIPOFILE_GITHUB_REPO;
+}

@@ -16,7 +16,7 @@ import { DOWNLOADS, GITHUB_REPO_URL } from "./content/downloads";
 import { DISPLAY_VERSION_EVENT, fetchDisplayVersion } from "./lib/displayVersion";
 import { recordAppDownload } from "./lib/downloadStats";
 import { isTauri } from "./lib/platform";
-import { externalLinkRel, safeAppPath, safeExternalHref } from "./lib/safeUrl";
+import { externalLinkRel, safeAppPath, safeExternalHref, safeGitHubRepoHref } from "./lib/safeUrl";
 import { downloadZip, listProjects, removeProject, unzipProject, validateSkipField, zipProjectFromPicker } from "./lib/projects";
 import { splitField } from "./lib/skipList";
 import { ZipProgressBar } from "./components/ZipProgressBar";
@@ -36,7 +36,7 @@ function formatDate(iso: string) {
 const SEARCH_LETTERS_ONLY = /[^a-zA-Z\s]/g;
 const sanitizeSearchQuery = (raw: string) => raw.replace(SEARCH_LETTERS_ONLY, "");
 
-const GITHUB_HREF = safeExternalHref(GITHUB_REPO_URL);
+const GITHUB_HREF = safeGitHubRepoHref(GITHUB_REPO_URL);
 const SHARE_URL = "https://zipofile.com/";
 const SHARE_TITLE = "ZipoFile";
 const SHARE_TEXT =
@@ -391,11 +391,12 @@ export default function App() {
               title="GitHub"
               target="_blank"
               rel={externalLinkRel}
+              referrerPolicy="no-referrer"
               onClick={(e) => {
                 if (!isTauri()) return;
                 e.preventDefault();
                 void import("@tauri-apps/api/core").then(({ invoke }) =>
-                  invoke("open_external", { url: GITHUB_HREF.replace(/\/$/, "") }),
+                  invoke("open_external", { url: GITHUB_HREF }),
                 );
               }}
             >

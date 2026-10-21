@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeAppPath, safeExternalHref } from "../src/lib/safeUrl";
+import { safeAppPath, safeExternalHref, safeGitHubRepoHref, ZIPOFILE_GITHUB_REPO } from "../src/lib/safeUrl";
 
 describe("safeExternalHref", () => {
   it("allows https URLs", () => {
@@ -13,6 +13,15 @@ describe("safeExternalHref", () => {
 
   it("blocks credentials in URL", () => {
     expect(safeExternalHref("https://user:pass@example.com/")).toBeNull();
+  });
+});
+
+describe("safeGitHubRepoHref", () => {
+  it("allows only the ZipoFile repo on github.com", () => {
+    expect(safeGitHubRepoHref()).toBe(ZIPOFILE_GITHUB_REPO);
+    expect(safeGitHubRepoHref("https://github.com/purupokharel/zipofile/")).toBe(ZIPOFILE_GITHUB_REPO);
+    expect(safeGitHubRepoHref("https://evil.com/purupokharel/zipofile")).toBeNull();
+    expect(safeGitHubRepoHref("https://github.com/other/zipofile")).toBeNull();
   });
 });
 
