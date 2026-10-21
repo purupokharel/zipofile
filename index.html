@@ -3,23 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <title>ZipoFile – Project Folder Archiver</title>
     <meta
       name="description"
-      content="ZipoFile zips a project folder without node_modules, .venv, .git, build output, and caches, and stores the files without compression."
+      content="Zip projects without the dependency bloat. ZipoFile skips node_modules, .git, build output, and caches, and stores files without compression."
     />
-    <title>ZipoFile: zip project folders without dependency and build folders</title>
-    <link rel="canonical" href="https://zipofi.com/" />
+    <link rel="canonical" href="https://zipofile.com/" />
+
+    <!-- Open Graph (Facebook, WhatsApp, iMessage, Telegram, LinkedIn, Slack, email clients) -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://zipofi.com/" />
+    <meta property="og:url" content="https://zipofile.com/" />
     <meta property="og:site_name" content="ZipoFile" />
-    <meta property="og:title" content="ZipoFile — project folder archiver" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="ZipoFile – Project Folder Archiver" />
     <meta
       property="og:description"
       content="Zip projects without the dependency bloat. Skips node_modules, .git, build output, and caches."
     />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://zipofi.com/og-image.png?v=6" />
-    <meta property="og:image:secure_url" content="https://zipofi.com/og-image.png?v=6" />
+    <meta property="og:image" content="https://zipofile.com/og-image.png" />
+    <meta property="og:image:secure_url" content="https://zipofile.com/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -27,22 +30,55 @@
       property="og:image:alt"
       content="ZipoFile: zip projects without the dependency bloat. Smart excludes and store mode."
     />
+
+    <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="ZipoFile — project folder archiver" />
+    <meta name="twitter:title" content="ZipoFile – Project Folder Archiver" />
     <meta
       name="twitter:description"
       content="Zip projects without the dependency bloat. Skips node_modules, .git, build output, and caches."
     />
-    <meta name="twitter:image" content="https://zipofi.com/og-image.png?v=6" />
-    <link rel="image_src" href="https://zipofi.com/og-image.png?v=6" />
-    <link rel="icon" href="/favicon.ico?v=3" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png?v=3" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
-    <link rel="manifest" href="/site.webmanifest?v=3" />
-    <meta name="theme-color" content="#007aff" />
+    <meta name="twitter:image" content="https://zipofile.com/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="ZipoFile: zip projects without the dependency bloat. Smart excludes and store mode."
+    />
+
+    <!-- Icons (favicons only; never used as share images) -->
+    <link rel="icon" href="/favicon.ico?v=17" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png?v=17" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=17" />
+
+    <!-- PWA / Apple web app -->
+    <link rel="manifest" href="/site.webmanifest?v=17" />
+    <meta name="application-name" content="ZipoFile" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ZipoFile" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-TileColor" content="#0c0f14" />
+    <meta name="msapplication-TileImage" content="/icon-192.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ZipoFile",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "macOS",
+        "url": "https://zipofile.com/",
+        "image": "https://zipofile.com/og-image.png",
+        "description": "Zip project folders without node_modules, .git, build output, and caches. Store mode, no compression.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx?v=3"></script>
+    <script type="module" src="/src/main.tsx?v=17"></script>
   </body>
 </html>

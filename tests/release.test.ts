@@ -5,7 +5,8 @@ import { dirname, join } from "node:path";
 import { inputFiles, isInput, sourceHash } from "../scripts/source-hash.mjs";
 import { checkReleaseFresh } from "../scripts/check-release-fresh.mjs";
 import { verifyUpdaterSignature } from "../scripts/verify-updater-sig.mjs";
-import { nextPatch } from "../scripts/bump-version.mjs";
+import { nextPatch, toSemver } from "../scripts/bump-version.mjs";
+import { versionedDmgFileName } from "../scripts/dmg-name.mjs";
 import { APP_VERSION } from "../src/content/downloads";
 
 const ROOT = join(__dirname, "..");
@@ -84,30 +85,46 @@ describe("stale DMG check", () => {
     const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
     expect(pkg.scripts.build).toMatch(/^node scripts\/check-release-fresh\.mjs && /);
     expect(pkg.scripts["build:desktop"]).not.toMatch(/check-release-fresh|npm run build/);
+    expect(pkg.scripts["build:desktop"]).toMatch(/tsc -b tsconfig\.app\.json tsconfig\.node\.json/);
+    expect(pkg.scripts["build:desktop"]).not.toMatch(/tsconfig\.test/);
     const conf = JSON.parse(readFileSync(join(ROOT, "src-tauri/tauri.conf.json"), "utf8"));
     expect(conf.build.beforeBuildCommand).toBe("npm run build:desktop");
   });
 });
 
 describe("versions and updater config", () => {
-  it("bumps the patch number", () => {
-    expect(nextPatch("1.0.9")).toBe("1.0.10");
-    expect(() => nextPatch("1.0")).toThrow();
+  it("names the macOS dmg ZipoFile_vM_m.dmg", () => {
+    expect(versionedDmgFileName("1.0")).toBe("ZipoFile_v1_0.dmg");
+    expect(versionedDmgFileName("2.1")).toBe("ZipoFile_v2_1.dmg");
+    expect(versionedDmgFileName("2.9")).toBe("ZipoFile_v2_9.dmg");
   });
-  it("keeps one version in package.json, Cargo.toml, tauri.conf.json and the UI", () => {
+  it("bumps minor 0–9 then rolls major", () => {
+    expect(nextPatch("1.0")).toBe("1.1");
+    expect(nextPatch("1.8")).toBe("1.9");
+    expect(nextPatch("1.9")).toBe("2.0");
+    expect(nextPatch("2.9")).toBe("3.0");
+    expect(nextPatch("1.0.11")).toBe("2.2");
+    expect(() => nextPatch("1.10")).toThrow();
+  });
+  it("keeps display version in package.json/UI and semver in Tauri/Cargo", () => {
     const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
     const conf = JSON.parse(readFileSync(join(ROOT, "src-tauri/tauri.conf.json"), "utf8"));
     const cargo = readFileSync(join(ROOT, "src-tauri/Cargo.toml"), "utf8");
     const lock = readFileSync(join(ROOT, "src-tauri/Cargo.lock"), "utf8");
-    expect(conf.version).toBe(pkg.version);
+    const semver = toSemver(pkg.version);
+    expect(conf.version).toBe(semver);
     expect(APP_VERSION).toBe(pkg.version);
-    expect(cargo).toMatch(new RegExp(`\\[package\\][^\\[]*\\nversion = "${pkg.version.replace(/\./g, "\\.")}"`));
-    expect(lock).toContain(`name = "zipofi"\nversion = "${pkg.version}"`);
+    expect(cargo).toMatch(new RegExp(`\\[package\\][^\\[]*\\nversion = "${semver.replace(/\./g, "\\.")}"`));
+    expect(lock).toContain(`name = "zipofi"\nversion = "${semver}"`);
+  });
+  it("maps display version to Tauri semver", () => {
+    expect(toSemver("2.1")).toBe("2.1.0");
+    expect(toSemver("1.9")).toBe("1.9.0");
   });
   it("configures the signed updater feed", () => {
     const conf = JSON.parse(readFileSync(join(ROOT, "src-tauri/tauri.conf.json"), "utf8"));
     expect(conf.bundle.createUpdaterArtifacts).toBe(true);
-    expect(conf.plugins.updater.endpoints).toEqual(["https://zipofi.com/downloads/latest.json"]);
+    expect(conf.plugins.updater.endpoints).toEqual(["https://zipofile.com/downloads/latest.json"]);
     expect(Buffer.from(conf.plugins.updater.pubkey, "base64").toString("utf8")).toMatch(/^untrusted comment: minisign public key/);
     const caps = JSON.parse(readFileSync(join(ROOT, "src-tauri/capabilities/default.json"), "utf8"));
     expect(caps.permissions).toEqual(expect.arrayContaining(["updater:default", "process:allow-restart"]));
@@ -119,7 +136,7 @@ describe("versions and updater config", () => {
     const rel = JSON.parse(readFileSync(join(pub, "release.json"), "utf8"));
     expect(latest.version).toBe(rel.version);
     for (const k of ["darwin-x86_64", "darwin-aarch64"]) {
-      expect(latest.platforms[k].url).toBe("https://zipofi.com/downloads/ZipoFile.app.tar.gz");
+      expect(latest.platforms[k].url).toBe("https://zipofile.com/downloads/ZipoFile.app.tar.gz");
     }
     const conf = JSON.parse(readFileSync(join(ROOT, "src-tauri/tauri.conf.json"), "utf8"));
     const r = verifyUpdaterSignature(readFileSync(join(pub, "ZipoFile.app.tar.gz")), latest.platforms["darwin-x86_64"].signature, conf.plugins.updater.pubkey);

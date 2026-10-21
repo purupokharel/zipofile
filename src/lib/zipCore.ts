@@ -1,7 +1,7 @@
 import { unzip } from "fflate";
 
 /**
- * Zipofi's web ZIP writer. Every entry is STORED (method 0). Zip64 end records are
+ * ZipoFile's web ZIP writer. Every entry is STORED (method 0). Zip64 end records are
  * written when there are 65,535 or more entries or the archive passes 4 GiB, so
  * very large folders produce a valid archive. Output is a list of parts so a Blob
  * can be built without copying every file into one big buffer.

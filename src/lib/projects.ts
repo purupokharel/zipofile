@@ -246,6 +246,8 @@ async function saveEntry(
     zipPath: safeArchiveFileName(name),
     zippedAt: new Date().toISOString(),
     skip: skipLines,
+    zipMs: Date.now() - started,
+    zipSizeBytes: blob.size,
     blobUrl,
   };
   emit(onProgress, state, {
@@ -325,6 +327,22 @@ export async function listProjects(): Promise<ProjectEntry[]> {
     return invoke<ProjectEntry[]>("list_projects");
   }
   return webList();
+}
+
+export async function removeProject(entry: ProjectEntry): Promise<void> {
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("remove_project", { id: entry.id });
+    return;
+  }
+  if (entry.blobUrl) URL.revokeObjectURL(entry.blobUrl);
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(entry.id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 function pickWebkitFolder(displayName: string, skipLines: string[], onProgress?: ProgressFn): Promise<ProjectEntry> {
@@ -526,7 +544,7 @@ export async function unzipProject(entry: ProjectEntry): Promise<void> {
   }
 }
 
-export function downloadZip(entry: ProjectEntry): void {
+export async function downloadZip(entry: ProjectEntry): Promise<void> {
   if (entry.blobUrl) {
     const a = document.createElement("a");
     a.href = entry.blobUrl;
@@ -534,9 +552,8 @@ export function downloadZip(entry: ProjectEntry): void {
     a.click();
     return;
   }
-  if (isTauri() && entry.zipPath) {
-    void import("@tauri-apps/plugin-dialog").then(({ message }) =>
-      message(`Archive saved at:\n${entry.zipPath}`, { title: "ZipoFile", kind: "info" }),
-    );
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("reveal_archive_in_finder", { id: entry.id });
   }
 }

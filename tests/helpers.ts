@@ -17,7 +17,7 @@ export function makeTree(files: string[], root?: string, name = "proj"): string 
 
 export function contentFor(rel: string): Uint8Array {
   // Mix of text and binary-ish bytes so byte-identity checks mean something.
-  const head = new TextEncoder().encode(`zipofi fixture: ${rel}\n`);
+  const head = new TextEncoder().encode(`ZipoFile fixture: ${rel}\n`);
   const tail = new Uint8Array(257);
   for (let i = 0; i < tail.length; i++) tail[i] = (i * 31 + rel.length) & 0xff;
   const out = new Uint8Array(head.length + tail.length);

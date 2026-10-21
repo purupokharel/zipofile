@@ -1,11 +1,12 @@
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { DownloadMenu } from "../src/components/DownloadMenu";
 import { APP_VERSION, DOWNLOADS, SITE_ORIGIN } from "../src/content/downloads";
+import { versionedDmgFileName } from "../src/lib/dmgName";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -42,7 +43,7 @@ describe("header Download menu", () => {
     const [mac, linux, win] = items();
     expect(items()).toHaveLength(3);
     expect(mac!.tagName).toBe("A");
-    expect(mac!.getAttribute("href")).toBe("/downloads/ZipoFile.dmg");
+    expect(mac!.getAttribute("href")).toBe(`/downloads/${versionedDmgFileName(APP_VERSION)}?v=${APP_VERSION}`);
     expect(mac!.hasAttribute("download")).toBe(true);
     expect(mac!.textContent).toContain("macOS App");
     expect(mac!.textContent).toContain("Intel & Apple Silicon");
@@ -90,6 +91,11 @@ describe("Download menu in the desktop app", () => {
       invoke: async (cmd: string, args: unknown) => void calls.push({ cmd, args }),
       transformCallback: () => 0,
     };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: "2.2", dmg: "ZipoFile_v2_2.dmg" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
     try {
       act(() => button().click());
       const mac = items()[0]!;
@@ -97,23 +103,25 @@ describe("Download menu in the desktop app", () => {
       act(() => void mac.dispatchEvent(ev));
       expect(ev.defaultPrevented).toBe(true);
       await new Promise((r) => setTimeout(r, 50));
-      expect(calls).toEqual([{ cmd: "open_external", args: { url: `${SITE_ORIGIN}/downloads/ZipoFile.dmg` } }]);
-      expect(readFileSync(join(__dirname, "../src-tauri/src/lib.rs"), "utf8")).toContain("https://zipofi.com/downloads/");
+      expect(calls).toEqual([{ cmd: "open_external", args: { url: `${SITE_ORIGIN}/downloads/ZipoFile_v2_2.dmg?v=2.2` } }]);
+      expect(mac.getAttribute("href")).toBe(`${SITE_ORIGIN}/downloads/${versionedDmgFileName(APP_VERSION)}?v=${APP_VERSION}`);
+      expect(readFileSync(join(__dirname, "../src-tauri/src/lib.rs"), "utf8")).toContain("https://zipofile.com/downloads/");
     } finally {
       delete w.__TAURI_INTERNALS__;
+      vi.unstubAllGlobals();
     }
   });
 });
 
 describe("download artifacts", () => {
-  it("version matches tauri.conf.json", () => {
+  it("tauri.conf.json semver matches display version", () => {
     const conf = JSON.parse(readFileSync(join(__dirname, "../src-tauri/tauri.conf.json"), "utf8"));
-    expect(APP_VERSION).toBe(conf.version);
+    expect(conf.version).toBe(`${APP_VERSION}.0`);
   });
   it("every available download exists in public/ and is a non-trivial file", () => {
     for (const d of DOWNLOADS) {
       if (!d.available) continue;
-      const p = join(__dirname, "../public", d.href);
+      const p = join(__dirname, "../public", d.href.split("?")[0]);
       expect(existsSync(p), p).toBe(true);
       expect(statSync(p).size).toBeGreaterThan(1_000_000);
     }

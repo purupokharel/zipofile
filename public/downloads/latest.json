@@ -1,15 +1,15 @@
 {
-  "version": "1.0.10",
-  "notes": "ZipoFile 1.0.10",
-  "pub_date": "2026-10-19T17:15:40.615Z",
+  "version": "2.1",
+  "notes": "ZipoFile 2.1",
+  "pub_date": "2026-10-21T02:21:23.315Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTZXU5M2xvWUhRdlBla3E4SmRaZVZOTDFDNS92S2kxU1BSVVlwbE5PVWoyR0RSVW13TlBMQTNJNFNGVzRrOTBRWGJta0tzbldyalkxL0ZaWkdvOURsUmdTT1hPVkh2N2dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDMwMDk1CWZpbGU6Wmlwb0ZpbGUuYXBwLnRhci5negpVZHZiKzkydm8rS3N4YjNMaEx6dGI1bmJjUEtoQTkwdm8xbzFjazZHSEg0RC81b09MM0YyS1RQV0ZIeUtlNFBhK0k3OVB1Rmt2dzF0ajA5WGhlM0xCdz09Cg==",
-      "url": "https://zipofi.com/downloads/ZipoFile.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTZXU5M2xvWUhRdkRGd2lKMkZXVVhTMVNhT3R1K0VZeEJqTUZxT054K084TS92d3VBcDdNaVVQbktLMGJJcS9XQ2xDSHlaakZud3paYTZ6MWpPb1QzWUd4V1hrZUFJOUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTQ5MjM0CWZpbGU6Wmlwb0ZpbGUuYXBwLnRhci5negpOS01IOXlwSlM1ZS9tRDk3YU5Sa0ZxQWpSZk5Ec2hkeDI2cDcrU2Z6ZlJFNU4vOW90TndjUUVrV010QTMxWUhid0xuQTVlN1lkNndPQjNySXRITFpCZz09Cg==",
+      "url": "https://zipofile.com/downloads/ZipoFile.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTZXU5M2xvWUhRdlBla3E4SmRaZVZOTDFDNS92S2kxU1BSVVlwbE5PVWoyR0RSVW13TlBMQTNJNFNGVzRrOTBRWGJta0tzbldyalkxL0ZaWkdvOURsUmdTT1hPVkh2N2dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDMwMDk1CWZpbGU6Wmlwb0ZpbGUuYXBwLnRhci5negpVZHZiKzkydm8rS3N4YjNMaEx6dGI1bmJjUEtoQTkwdm8xbzFjazZHSEg0RC81b09MM0YyS1RQV0ZIeUtlNFBhK0k3OVB1Rmt2dzF0ajA5WGhlM0xCdz09Cg==",
-      "url": "https://zipofi.com/downloads/ZipoFile.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTZXU5M2xvWUhRdkRGd2lKMkZXVVhTMVNhT3R1K0VZeEJqTUZxT054K084TS92d3VBcDdNaVVQbktLMGJJcS9XQ2xDSHlaakZud3paYTZ6MWpPb1QzWUd4V1hrZUFJOUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTQ5MjM0CWZpbGU6Wmlwb0ZpbGUuYXBwLnRhci5negpOS01IOXlwSlM1ZS9tRDk3YU5Sa0ZxQWpSZk5Ec2hkeDI2cDcrU2Z6ZlJFNU4vOW90TndjUUVrV010QTMxWUhid0xuQTVlN1lkNndPQjNySXRITFpCZz09Cg==",
+      "url": "https://zipofile.com/downloads/ZipoFile.app.tar.gz"
     }
   }
 }

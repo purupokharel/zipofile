@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { AUTO_APP_VERSION } from "../content/downloads";
 import { fetchSiteStats, millionGoal, type SiteStats } from "../lib/downloadStats";
+import { DISPLAY_VERSION_EVENT, fetchPublishedVersion, formatPublicVersion } from "../lib/displayVersion";
 import { formatBytes } from "../lib/zipProgress";
 
 type PreviewArchivesToggle = {
@@ -11,6 +13,7 @@ type PreviewArchivesToggle = {
 
 export function CommunityStats({ previewArchives }: { previewArchives?: PreviewArchivesToggle }) {
   const [stats, setStats] = useState<SiteStats | null>(null);
+  const [version, setVersion] = useState(AUTO_APP_VERSION);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +32,23 @@ export function CommunityStats({ previewArchives }: { previewArchives?: PreviewA
       cancelled = true;
       clearInterval(t);
       window.removeEventListener("zipofile-download", onDl);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      void fetchPublishedVersion().then((v) => {
+        if (!cancelled) setVersion(v);
+      });
+    };
+    load();
+    const t = window.setInterval(load, 30_000);
+    window.addEventListener(DISPLAY_VERSION_EVENT, load);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+      window.removeEventListener(DISPLAY_VERSION_EVENT, load);
     };
   }, []);
 
@@ -62,6 +82,11 @@ export function CommunityStats({ previewArchives }: { previewArchives?: PreviewA
           </p>
         </button>
       )}
+      <article className="web-stat card">
+        <p className="web-stat-label">What's New</p>
+        <p className="web-stat-value">v{formatPublicVersion(version)}</p>
+        <p className="web-stat-sub">Extract, Show in Finder, and Trash on every archive.</p>
+      </article>
     </div>
   );
 }

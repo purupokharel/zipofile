@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Content hash of every input that goes into the Zipofi app and site build.
+// Content hash of every input that goes into the ZipoFile app and site build.
 // Only file paths and contents count, so `touch` (mtime only) does not change it.
 //   node scripts/source-hash.mjs          # prints the hash
 //   node scripts/source-hash.mjs --list   # prints the hashed files

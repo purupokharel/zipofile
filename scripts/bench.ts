@@ -104,4 +104,4 @@ for (const p of parts) {
 flush();
 closeSync(fd);
 const ms = Math.round(performance.now() - t0);
-console.log(`BENCH zipofi-web src=${src} files=${scan.files} bytes=${bytes} zip_bytes=${zipBytes} ms=${ms}`);
+console.log(`BENCH ZipoFile-web src=${src} files=${scan.files} bytes=${bytes} zip_bytes=${zipBytes} ms=${ms}`);

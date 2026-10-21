@@ -8,11 +8,35 @@ export function formatBytes(n: number): string {
 }
 
 export function formatDuration(ms: number): string {
-  const s = Math.max(0, Math.floor(ms / 1000));
+  const n = Math.max(0, ms);
+  if (n < 1000) return `${(n / 1000).toFixed(1)}s`;
+  const s = Math.floor(n / 1000);
   const m = Math.floor(s / 60);
-  const r = s % 60;
-  if (m > 0) return `${m}m ${r.toString().padStart(2, "0")}s`;
-  return `${r}s`;
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${(m % 60).toString().padStart(2, "0")}m`;
+  if (m > 0) return `${m}m ${(s % 60).toString().padStart(2, "0")}s`;
+  return `${s}s`;
+}
+
+/** Measured STORE vs `zip -r -0` on the About example (~6.5×). */
+export const ZIP_STORE_SPEEDUP = 6.5;
+
+export function timeSavedMs(zipMs: number): number {
+  return Math.max(0, zipMs) * (ZIP_STORE_SPEEDUP - 1);
+}
+
+export function lifetimeSavedMs(rows: { zipMs?: number }[]): number {
+  return rows.reduce((n, p) => n + timeSavedMs(p.zipMs ?? 0), 0);
+}
+
+export function lifetimeArchiveBytes(rows: { zipSizeBytes?: number }[]): number {
+  return rows.reduce((n, p) => n + (p.zipSizeBytes ?? 0), 0);
+}
+
+export function formatSavedOver(savedMs: number, totalBytes: number): string {
+  const s = Math.max(0, Math.floor(savedMs / 1000));
+  const m = Math.floor(s / 60);
+  return `${m}m ${(s % 60).toString().padStart(2, "0")}s saved over ${formatBytes(totalBytes)}`;
 }
 
 export function etaFromRate(done: number, total: number | null, elapsedMs: number): number | null {

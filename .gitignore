@@ -1,16 +1,53 @@
-node_modules
-dist
-src-tauri
+# Dependencies & build output
+node_modules/
+dist/
+src-tauri/
+target/
+
+# OS / editor noise
 .DS_Store
+**/.DS_Store
+Thumbs.db
 *.log
-.review
-dev-tools
+.review/
+dev-tools/
 CERTIFICATION.md
-scripts/__pycache__
-scripts/dmg
+
+# Python
+scripts/__pycache__/
+
+# --- Secrets & credentials (never commit; GitHub secret scanning) ---
+.env
+.env.*
+!.env.example
+deploy.env
+deploy.env.*
+*.pem
+*.p12
+*.mobileprovision
+credentials.json
+service-account*.json
+**/id_rsa
+**/id_rsa.*
+**/id_ed25519
+**/id_ed25519.*
+**/*known_hosts*
+
+# --- Release binaries & signed payloads (ship via GitHub Releases, not git) ---
+*.dmg
+*.dmg.blockmap
+*.blockmap
+*.sig
+*.app.tar.gz
+*.app/
+public/downloads/*
+!public/downloads/*.json
+scripts/dmg/
+
+# --- Deploy & local release automation (paths, SSH, notarization helpers) ---
+scripts/deploy.sh
 scripts/deploy.env
 scripts/deploy.env.example
-scripts/deploy.sh
 scripts/deploy-verify.mjs
 scripts/deploy_ssh.py
 scripts/deploy-ssh.sh
@@ -19,9 +56,6 @@ scripts/setup-zipofile-ssh.command
 scripts/release-mac.sh
 scripts/autorelease.sh
 scripts/auto-release.mjs
-public/api
-public/downloads/*.dmg
-public/downloads/*.tar.gz
-public/downloads/*.sig
-*.app
-*.app.tar.gz
+
+# Server-only PHP (lives on host, not in public source tree)
+public/api/

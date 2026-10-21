@@ -1,11 +1,20 @@
 # ZipoFile static site: serve files from disk; SPA fallback only when missing.
 <IfModule mod_mime.c>
   AddType image/png .png
+  AddType application/manifest+json .webmanifest
+  AddType image/x-icon .ico
 </IfModule>
 <IfModule mod_headers.c>
-  <FilesMatch "^og-image\.png$">
+  <FilesMatch "^(og-image|apple-touch-icon|icon-192|icon-512|icon-maskable-512|icon-32)\.png$">
     Header set Content-Type "image/png"
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+  <FilesMatch "^site\.webmanifest$">
+    Header set Content-Type "application/manifest+json"
     Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+  <FilesMatch "\.(dmg|tar\.gz|sig)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
   </FilesMatch>
 </IfModule>
 <IfModule mod_rewrite.c>

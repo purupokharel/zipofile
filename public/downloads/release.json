@@ -1,8 +1,8 @@
 {
-  "version": "1.0.10",
-  "sourceHash": "10b325873a87dc11cb5cc9300cfc2cc883041cd8e3a1e55476b15e7eba36b247",
-  "builtAt": "2026-10-19T17:15:40.615Z",
-  "dmg": "ZipoFile.dmg",
-  "dmgSha256": "7c591e6ea52b93821869fadef31347a7b44eac168c09dc6b0262c6045904df22",
+  "version": "2.1",
+  "sourceHash": "ce02ab79a894a00e0e81dc1693c9cedc705144967b0368388a035be221c928ec",
+  "builtAt": "2026-10-21T02:21:23.315Z",
+  "dmg": "ZipoFile_v2_1.dmg",
+  "dmgSha256": "7ae34b601b96b4f342ad200b33dec63b1c2a54465a065e3f085a99a4f022dd29",
   "updater": "ZipoFile.app.tar.gz"
 }

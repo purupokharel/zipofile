@@ -2,7 +2,7 @@ import RULES from "./exclude-rules.json";
 import { EMPTY_SKIP, skipMatches, type SkipList } from "./skipList";
 
 /**
- * Zipofi exclusion rules (web side). The rule data lives in exclude-rules.json and is
+ * ZipoFile exclusion rules (web side). The rule data lives in exclude-rules.json and is
  * shared byte-for-byte with the desktop app (src-tauri/src/lib.rs), so both builds skip
  * exactly the same trees.
  *

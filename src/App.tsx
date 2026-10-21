@@ -7,19 +7,21 @@ import { DownloadMenu } from "./components/DownloadMenu";
 import { WebDemoSheet } from "./components/WebDemoSheet";
 import { SheetMarkdown } from "./components/SheetMarkdown";
 import { UpdatePrompt } from "./components/UpdatePrompt";
-import { IconArchive, IconBrandLogo, IconCoffee, IconDoc, IconLock, IconNavFolder, IconPlus, IconSearch, IconShare, IconSidebarPlus, IconSidebarSearch, IconWindowClose, IconZip } from "./components/icons";
+import { IconApple, IconArchive, IconBrandLogo, IconClose, IconCoffee, IconDoc, IconExtract, IconGitHub, IconInfo, IconLock, IconNavExpand, IconNavFolder, IconPlus, IconSearch, IconShare, IconShowInFinder, IconSidebarPlus, IconSidebarSearch, IconTrash, IconWindowClose, IconWinPlus, IconZip } from "./components/icons";
 import { WEB_SAMPLE_ARCHIVES, WEB_SAMPLE_ARCHIVE_TOTAL_BYTES } from "./content/sampleArchives";
-import { REFRESH_WARNING, SHEETS } from "./content/sheets";
+import { REFRESH_WARNING, SAMPLE_ARCHIVE_DEMO, SHEETS, TRASH_CONFIRM_TITLE, trashConfirmBody, type SampleArchiveDemoId } from "./content/sheets";
 
 const ARCHIVE_SESSION_KEY = "zipofi-archiving";
-import { DOWNLOADS } from "./content/downloads";
+import { DOWNLOADS, GITHUB_REPO_URL } from "./content/downloads";
 import { DISPLAY_VERSION_EVENT, fetchDisplayVersion } from "./lib/displayVersion";
 import { recordAppDownload } from "./lib/downloadStats";
 import { isTauri } from "./lib/platform";
-import { safeAppPath } from "./lib/safeUrl";
-import { downloadZip, listProjects, unzipProject, validateSkipField, zipProjectFromPicker } from "./lib/projects";
+import { externalLinkRel, safeAppPath, safeExternalHref } from "./lib/safeUrl";
+import { downloadZip, listProjects, removeProject, unzipProject, validateSkipField, zipProjectFromPicker } from "./lib/projects";
 import { splitField } from "./lib/skipList";
 import { ZipProgressBar } from "./components/ZipProgressBar";
+import { SIDEBAR_RECENT_COUNT, sidebarArchiveEntries, sidebarArchiveRatio } from "./lib/sidebarArchives";
+import { formatDuration } from "./lib/zipProgress";
 import type { ProjectEntry, SheetId, ZipProgress } from "./types";
 
 
@@ -31,14 +33,23 @@ function formatDate(iso: string) {
   }).format(new Date(iso));
 }
 
-const SHARE_URL = "https://zipofi.com/";
+const SEARCH_LETTERS_ONLY = /[^a-zA-Z\s]/g;
+const sanitizeSearchQuery = (raw: string) => raw.replace(SEARCH_LETTERS_ONLY, "");
+
+const GITHUB_HREF = safeExternalHref(GITHUB_REPO_URL);
+const SHARE_URL = "https://zipofile.com/";
 const SHARE_TITLE = "ZipoFile";
 const SHARE_TEXT =
   "Zip projects without the dependency bloat. Skips node_modules, .git, build output, and caches.";
 
-/** Share the site link: native share sheet where the browser has one, else copy it. Link previews use og:* tags on the deployed site. */
+function shareUrl() {
+  const canonicalHref = document.querySelector<HTMLLinkElement>("link[rel='canonical']")?.href;
+  return canonicalHref || SHARE_URL;
+}
+
+/** Share canonical URL so social apps fetch OG metadata and large card image. */
 async function shareZipofi(notify: (m: string) => void) {
-  const url = SHARE_URL;
+  const url = shareUrl();
   if (isTauri()) {
     try {
       const { invoke } = await import("@tauri-apps/api/core");
@@ -46,10 +57,12 @@ async function shareZipofi(notify: (m: string) => void) {
       return;
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
+      console.error(e);
     }
   } else if (typeof navigator.share === "function") {
     try {
-      await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url });
+      const payload: ShareData = { url };
+      await navigator.share(payload);
       return;
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
@@ -76,8 +89,13 @@ export default function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [previewArchivesOpen, setPreviewArchivesOpen] = useState(false);
+  const [removedSampleIds, setRemovedSampleIds] = useState<string[]>([]);
   const [brandVersion, setBrandVersion] = useState("…");
   const [refreshWarn, setRefreshWarn] = useState<"attempt" | "interrupted" | null>(null);
+  const [trashConfirm, setTrashConfirm] = useState<{ entry: ProjectEntry; sample: boolean } | null>(null);
+  const [sampleDemo, setSampleDemo] = useState<SampleArchiveDemoId | null>(null);
+  const [sidebarArchivesExpanded, setSidebarArchivesExpanded] = useState(false);
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
   const archiving =
     zipping && zipProgress != null && zipProgress.phase !== "done" && zipProgress.phase !== "picking";
 
@@ -103,6 +121,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isTauri()) {
+      sessionStorage.removeItem(ARCHIVE_SESSION_KEY);
+      return;
+    }
     if (sessionStorage.getItem(ARCHIVE_SESSION_KEY) === "1") {
       sessionStorage.removeItem(ARCHIVE_SESSION_KEY);
       setRefreshWarn("interrupted");
@@ -110,6 +132,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isTauri()) return;
     if (!archiving) {
       sessionStorage.removeItem(ARCHIVE_SESSION_KEY);
       return;
@@ -138,7 +161,11 @@ export default function App() {
     };
   }, [archiving]);
 
-  const openSheet = (id: SheetId) => setSheet(id);
+  const clearSpotlight = () => setSpotlightId(null);
+  const openSheet = (id: SheetId) => {
+    clearSpotlight();
+    setSheet(id);
+  };
   const closeSheet = () => setSheet(null);
 
   const handleZip = () => {
@@ -176,6 +203,32 @@ export default function App() {
     }
   };
 
+  const requestTrash = (p: ProjectEntry, sample: boolean) => setTrashConfirm({ entry: p, sample });
+
+  const confirmTrash = async () => {
+    if (!trashConfirm) return;
+    const { entry, sample } = trashConfirm;
+    setTrashConfirm(null);
+    if (sample) {
+      setRemovedSampleIds((ids) => (ids.includes(entry.id) ? ids : [...ids, entry.id]));
+      if (spotlightId === entry.id) clearSpotlight();
+      setMessage(`Trashed “${entry.name}”.`);
+      return;
+    }
+    setZipping(true);
+    setMessage(null);
+    try {
+      await removeProject(entry);
+      if (spotlightId === entry.id) clearSpotlight();
+      await refresh();
+      setMessage(`Trashed “${entry.name}”.`);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Could not trash archive.");
+    } finally {
+      setZipping(false);
+    }
+  };
+
   const webSite = !isTauri();
   const macDl =
     webSite &&
@@ -193,6 +246,7 @@ export default function App() {
       ? "Support ZipoFile"
       : (sheetContent?.title ?? "");
   const openNewArchive = () => {
+    clearSpotlight();
     closeSheet();
     setAddOpen(true);
   };
@@ -200,9 +254,29 @@ export default function App() {
   const q = query.trim().toLowerCase();
   const samplePreview = webSite && projects.length === 0;
   const showingSampleArchives = samplePreview && previewArchivesOpen;
-  const archiveList = showingSampleArchives ? WEB_SAMPLE_ARCHIVES : samplePreview ? [] : projects;
-  const sidebarArchives = (showingSampleArchives ? WEB_SAMPLE_ARCHIVES : samplePreview ? [] : projects).slice(0, 5);
+  const visibleSampleArchives = WEB_SAMPLE_ARCHIVES.filter((p) => !removedSampleIds.includes(p.id));
+  const archiveList = showingSampleArchives ? visibleSampleArchives : samplePreview ? [] : projects;
+  const allSidebarArchives = samplePreview ? visibleSampleArchives : projects;
+  const sidebarArchives = sidebarArchiveEntries(allSidebarArchives, sidebarArchivesExpanded);
+  const sidebarRatio =
+    allSidebarArchives.length > 0
+      ? sidebarArchiveRatio(
+          sidebarArchivesExpanded ? allSidebarArchives.length : Math.min(SIDEBAR_RECENT_COUNT, allSidebarArchives.length),
+          allSidebarArchives.length,
+        )
+      : "";
   const shown = q ? archiveList.filter((p) => p.name.toLowerCase().includes(q)) : archiveList;
+
+  const focusArchiveInList = (id: string) => {
+    if (samplePreview) setPreviewArchivesOpen(true);
+    setSpotlightId(id);
+    setAddOpen(false);
+    closeSheet();
+    setQuery("");
+    window.setTimeout(() => document.getElementById("a-" + id)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  };
+
+  const rowClass = (id: string) => (spotlightId === id ? "row spotlight" : "row");
   const footLink = (id: SheetId, label: string, icon: React.ReactNode) => (
     <button type="button" className={`nav-item${sheet === id && !addOpen ? " active" : ""}`} onClick={() => { setAddOpen(false); openSheet(id); }}>
       <span className="foot-icon">{icon}</span>
@@ -223,34 +297,52 @@ export default function App() {
             <IconSidebarPlus />
           </button>
         </div>
-        <div className="brand" data-tauri-drag-region="deep">
-          <span className="brand-logo" aria-hidden="true">
+        <div className="brand" data-tauri-drag-region="deep" aria-label={`ZipoFile v${brandVersion}`}>
+          <span className="brand-logo">
             <IconBrandLogo />
+            <span className="brand-logo-ver" aria-hidden="true">v{brandVersion}</span>
           </span>
-          <span className="brand-name">ZipoFile<span className="brand-ver"> · v{brandVersion}</span></span>
+          <span className="brand-name">ZipoFile</span>
         </div>
         <nav className="nav" aria-label="Main">
           <div className="nav-group">
-            <button type="button" className={`nav-item${!drawerOpen ? " active" : ""}`} onClick={() => { setAddOpen(false); closeSheet(); }}>
-              <IconArchive /> Archives
-              {((!webSite && projects.length > 0) || showingSampleArchives) && (
-                <span className="badge">{showingSampleArchives ? WEB_SAMPLE_ARCHIVES.length : projects.length}</span>
-              )}
-            </button>
+            <div className={`nav-archive-section${!drawerOpen ? " active" : ""}`}>
+              <button
+                type="button"
+                className="nav-archive-cell nav-archive-leading"
+                onClick={() => {
+                  setAddOpen(false);
+                  closeSheet();
+                  clearSpotlight();
+                }}
+              >
+                <IconArchive />
+                <span className="nav-archive-title">Archives</span>
+              </button>
+              <div className="nav-archive-cell nav-archive-mid" aria-hidden={!sidebarRatio}>
+                <span className="nav-archive-ratio">{sidebarRatio}</span>
+              </div>
+              <button
+                type="button"
+                className={`nav-archive-cell nav-archive-expand nav-expand${sidebarArchivesExpanded ? " on" : ""}`}
+                aria-label={sidebarArchivesExpanded ? "Show recent archives" : "Show all archives alphabetically"}
+                aria-expanded={sidebarArchivesExpanded}
+                title={sidebarArchivesExpanded ? "Recent archives" : "All archives (A–Z)"}
+                disabled={allSidebarArchives.length === 0}
+                onClick={() => setSidebarArchivesExpanded((v) => !v)}
+              >
+                <IconNavExpand />
+              </button>
+            </div>
             {sidebarArchives.length > 0 && (
-              <div className="nav-sublist" role="group" aria-label="Recent archives">
+              <div className="nav-sublist" role="group" aria-label={sidebarArchivesExpanded ? "All archives" : "Recent archives"}>
                 {sidebarArchives.map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    className="nav-sub"
+                    className={`nav-sub${spotlightId === p.id ? " active" : ""}`}
                     title={p.name}
-                    onClick={() => {
-                      setAddOpen(false);
-                      closeSheet();
-                      setQuery("");
-                      setTimeout(() => document.getElementById("a-" + p.id)?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-                    }}
+                    onClick={() => focusArchiveInList(p.id)}
                   >
                     <span className="nav-sub-icon" aria-hidden>
                       <IconNavFolder />
@@ -279,39 +371,79 @@ export default function App() {
       <main className="content">
         <div className="drag" data-tauri-drag-region />
         <div className="win-actions">
-          <button type="button" className="side-icon" aria-label="Share" title="Share" onClick={() => void shareZipofi(setMessage)}>
-            <IconShare />
-          </button>
           <button
             type="button"
-            className="side-icon"
-            aria-label="Close"
-            title="Close"
+            className={`side-icon win-about${sheet === "about" && !addOpen ? " on" : ""}`}
+            aria-label="About"
+            title="About"
+            onClick={() => { setAddOpen(false); openSheet("about"); }}
+          >
+            <IconInfo />
+          </button>
+          <button type="button" className="side-icon win-share" aria-label="Share" title="Share" onClick={() => void shareZipofi(setMessage)}>
+            <IconShare />
+          </button>
+          {GITHUB_HREF && (
+            <a
+              href={GITHUB_HREF}
+              className="side-icon win-github"
+              aria-label="GitHub repository"
+              title="GitHub"
+              target="_blank"
+              rel={externalLinkRel}
+              onClick={(e) => {
+                if (!isTauri()) return;
+                e.preventDefault();
+                void import("@tauri-apps/api/core").then(({ invoke }) =>
+                  invoke("open_external", { url: GITHUB_HREF.replace(/\/$/, "") }),
+                );
+              }}
+            >
+              <IconGitHub />
+            </a>
+          )}
+          <button
+            type="button"
+            className={`side-icon${isTauri() ? "" : " win-plus"}`}
+            aria-label={isTauri() ? "Close" : "New Archive"}
+            title={isTauri() ? "Close" : "New Archive"}
+            disabled={!isTauri() && zipping}
             onClick={() => {
               if (isTauri()) void import("@tauri-apps/api/window").then(({ getCurrentWindow }) => getCurrentWindow().close());
-              else if (drawerOpen) closeDrawer();
-              else window.close(); // browsers allow this only for script-opened tabs
+              else openNewArchive();
             }}
           >
-            <IconWindowClose />
+            {isTauri() ? <IconWindowClose /> : <IconWinPlus />}
           </button>
         </div>
         <header className="toolbar" data-tauri-drag-region="deep">
-          <h1>Archives</h1>
-          <button
-            type="button"
-            className={`toolbar-about${sheet === "about" && !addOpen ? " active" : ""}`}
-            onClick={() => { setAddOpen(false); openSheet("about"); }}
-          >
-            About
-          </button>
+          <div className="archives-head">
+            <h1>Archives</h1>
+          </div>
           <label className="search">
             <IconSearch />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" aria-label="Search archives" />
+            <input
+              value={query}
+              onChange={(e) => {
+                clearSpotlight();
+                setQuery(sanitizeSearchQuery(e.target.value));
+              }}
+              placeholder="Search and find instantly..."
+              aria-label="Search archives"
+              autoComplete="off"
+              spellCheck={false}
+              inputMode="search"
+              maxLength={64}
+            />
+            {query && (
+              <button type="button" className="search-clear" aria-label="Clear search" onClick={() => setQuery("")}>
+                <IconClose />
+              </button>
+            )}
           </label>
           {macDl ? (
             <a className="btn primary dl-mac" href={macDl} download onClick={() => recordAppDownload()}>
-              Download macOS App
+              <IconApple /> Download
             </a>
           ) : (
             <button type="button" className="btn primary" disabled={zipping} onClick={openNewArchive}>
@@ -322,7 +454,7 @@ export default function App() {
 
         <div className="scroll">
           <UpdatePrompt />
-          <ZipProgressBar progress={zipProgress} active={zipping} />
+          {isTauri() && <ZipProgressBar progress={zipProgress} active={zipping} />}
           {message && (
             <div className="toast" role="status">
               <span>{message}</span>
@@ -333,14 +465,25 @@ export default function App() {
             showingSampleArchives ? (
               <ul className="list card">
                 {shown.map((p) => (
-                  <li key={p.id} id={"a-" + p.id} className="row">
+                  <li key={p.id} id={"a-" + p.id} className={rowClass(p.id)}>
                     <span className="row-icon"><IconArchive /></span>
                     <div className="row-main">
                       <strong>{p.name}</strong>
-                      <span>{formatDate(p.zippedAt)} · sample preview</span>
+                      <span>
+                        {formatDate(p.zippedAt)}
+                        {p.zipMs != null ? ` · zipped in ${formatDuration(p.zipMs)}` : ""}
+                        {" · sample preview"}
+                      </span>
                     </div>
-                    <button type="button" className="btn" disabled>Extract</button>
-                    <button type="button" className="btn" disabled>Download</button>
+                    <button type="button" className="btn row-action" aria-label="Extract" onClick={() => { clearSpotlight(); setSampleDemo("extract"); }}>
+                      <IconExtract /><span className="btn-label">Extract</span>
+                    </button>
+                    <button type="button" className="btn row-action" aria-label="Show in Finder" onClick={() => { clearSpotlight(); setSampleDemo("finder"); }}>
+                      <IconShowInFinder /><span className="btn-label">Show in Finder</span>
+                    </button>
+                    <button type="button" className="btn row-action" aria-label="Trash" onClick={() => requestTrash(p, true)}>
+                      <IconTrash /><span className="btn-label">Trash</span>
+                    </button>
                   </li>
                 ))}
                 {shown.length === 0 && <li className="row muted">No results for “{query}”.</li>}
@@ -350,7 +493,11 @@ export default function App() {
                 <div className="empty">
                   <span className="empty-icon"><IconZip /></span>
                   <h2>No Archives</h2>
-                  <p>Zip a project folder faster without node_modules, .git, build output, or caches. Keep it as yours forever.</p>
+                  <p className="empty-lead">
+                    Zip a project folder faster without node_modules, .git,
+                    <br />
+                    build output, or caches. Keep the app yours forever.
+                  </p>
                   <button type="button" className="btn primary" disabled={zipping} onClick={openNewArchive}>
                     <IconPlus /> New Archive
                   </button>
@@ -362,7 +509,11 @@ export default function App() {
               <div className="empty">
                 <span className="empty-icon"><IconZip /></span>
                 <h2>No Archives</h2>
-                <p>Zip a project folder faster without node_modules, .git, build output, or caches. Keep it as yours forever.</p>
+                <p className="empty-lead">
+                  Zip a project folder faster without node_modules, .git,
+                  <br />
+                  build output, or caches. Keep the app yours forever.
+                </p>
                 <button type="button" className="btn primary" disabled={zipping} onClick={openNewArchive}>
                   <IconPlus /> New Archive
                 </button>
@@ -371,20 +522,37 @@ export default function App() {
           ) : (
             <ul className="list card">
               {shown.map((p) => (
-                <li key={p.id} id={"a-" + p.id} className="row">
+                <li key={p.id} id={"a-" + p.id} className={rowClass(p.id)}>
                   <span className="row-icon"><IconArchive /></span>
                   <div className="row-main">
                     <strong>{p.name}</strong>
                     <span>
                       {formatDate(p.zippedAt)}
+                      {p.zipMs != null ? ` · zipped in ${formatDuration(p.zipMs)}` : ""}
                       {p.skip && p.skip.length > 0 && (
                         <> · <span title={p.skip.join("\n")}>{p.skip.length} custom {p.skip.length === 1 ? "exclusion" : "exclusions"}</span></>
                       )}
                     </span>
                   </div>
-                  <button type="button" className="btn" disabled={zipping} onClick={() => handleUnzip(p)}>Extract</button>
-                  <button type="button" className="btn" disabled={zipping} onClick={() => downloadZip(p)}>
-                    {isTauri() ? "Show in Finder" : "Download"}
+                  <button type="button" className="btn row-action" aria-label="Extract" disabled={zipping} onClick={() => { clearSpotlight(); void handleUnzip(p); }}>
+                    <IconExtract /><span className="btn-label">Extract</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn row-action"
+                    aria-label="Show in Finder"
+                    disabled={zipping}
+                    onClick={() => {
+                      clearSpotlight();
+                      void downloadZip(p).catch((e) =>
+                        setMessage(e instanceof Error ? e.message : "Could not open in Finder."),
+                      );
+                    }}
+                  >
+                    <IconShowInFinder /><span className="btn-label">Show in Finder</span>
+                  </button>
+                  <button type="button" className="btn row-action" aria-label="Trash" disabled={zipping} onClick={() => requestTrash(p, false)}>
+                    <IconTrash /><span className="btn-label">Trash</span>
                   </button>
                 </li>
               ))}
@@ -398,7 +566,12 @@ export default function App() {
                   count: WEB_SAMPLE_ARCHIVES.length,
                   totalBytes: WEB_SAMPLE_ARCHIVE_TOTAL_BYTES,
                   open: previewArchivesOpen,
-                  onToggle: () => setPreviewArchivesOpen((v) => !v),
+                  onToggle: () => {
+                    setPreviewArchivesOpen((v) => {
+                      if (v) clearSpotlight();
+                      return !v;
+                    });
+                  },
                 }}
               />
             </footer>
@@ -430,12 +603,47 @@ export default function App() {
       </BottomSheet>
 
       <BottomSheet
-        open={refreshWarn !== null}
-        title={REFRESH_WARNING[refreshWarn ?? "attempt"].title}
-        onClose={() => setRefreshWarn(null)}
+        open={sampleDemo !== null}
+        title={sampleDemo ? SAMPLE_ARCHIVE_DEMO[sampleDemo].title : ""}
+        onClose={() => setSampleDemo(null)}
       >
-        <SheetMarkdown body={REFRESH_WARNING[refreshWarn ?? "attempt"].body} />
+        {sampleDemo && (
+          <>
+            <SheetMarkdown body={SAMPLE_ARCHIVE_DEMO[sampleDemo].body} />
+            <div className="form-actions">
+              <button type="button" className="btn primary" onClick={() => setSampleDemo(null)}>Got it</button>
+            </div>
+          </>
+        )}
       </BottomSheet>
+
+      <BottomSheet
+        open={trashConfirm !== null}
+        title={TRASH_CONFIRM_TITLE}
+        onClose={() => setTrashConfirm(null)}
+      >
+        {trashConfirm && (
+          <>
+            <SheetMarkdown body={trashConfirmBody(trashConfirm.entry.name)} />
+            <div className="form-actions">
+              <button type="button" className="btn" onClick={() => setTrashConfirm(null)}>Cancel</button>
+              <button type="button" className="btn primary" disabled={zipping} onClick={() => void confirmTrash()}>
+                Trash
+              </button>
+            </div>
+          </>
+        )}
+      </BottomSheet>
+
+      {isTauri() && (
+        <BottomSheet
+          open={refreshWarn !== null}
+          title={REFRESH_WARNING[refreshWarn ?? "attempt"].title}
+          onClose={() => setRefreshWarn(null)}
+        >
+          <SheetMarkdown body={REFRESH_WARNING[refreshWarn ?? "attempt"].body} />
+        </BottomSheet>
+      )}
     </div>
   );
 }

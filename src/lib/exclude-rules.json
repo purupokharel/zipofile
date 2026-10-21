@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for Zipofi exclusions. Used by the web app (src/lib/excludes.ts) and the desktop app (src-tauri/src/lib.rs via include_str!). Only directories that are re-creatable, non-portable dependency/cache/build trees belong here. Ambiguous names (env, vendor, bin, obj, bundle) are contextual so real source is not dropped.",
+  "$comment": "Single source of truth for ZipoFile exclusions. Used by the web app (src/lib/excludes.ts) and the desktop app (src-tauri/src/lib.rs via include_str!). Only directories that are re-creatable, non-portable dependency/cache/build trees belong here. Ambiguous names (env, vendor, bin, obj, bundle) are contextual so real source is not dropped.",
   "version": 2,
   "dirs": [
     "node_modules", "bower_components", ".pnpm-store",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Confirms the desktop binary embeds the same hashed web assets that dist/ (the site) serves,
 // so the downloadable app has the same files and styles as the deployed site.
-//   node scripts/check-embedded-assets.mjs [path/to/Zipofi.app]
+//   node scripts/check-embedded-assets.mjs [path/to/ZipoFile.app]
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { projectRoot } from "./source-hash.mjs";

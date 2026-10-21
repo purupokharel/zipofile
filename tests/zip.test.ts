@@ -82,7 +82,7 @@ describe("zip round trip (store, level 0)", () => {
   });
 });
 
-describe("Zipofi store writer", () => {
+describe("ZipoFile store writer", () => {
   it("CRC-32 matches the reference value and zlib", async () => {
     const { crc32 } = await import("../src/lib/zipCore");
     expect(crc32(new TextEncoder().encode("123456789"))).toBe(0xcbf43926);
