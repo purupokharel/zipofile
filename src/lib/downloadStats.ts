@@ -4,8 +4,9 @@ export type SiteStats = {
   minutesPerDownload?: number;
 };
 
-const STATS_URL = "/downloads/stats.json";
+const STATS_URL = "/api/site-stats.php";
 const COUNT_URL = "/api/download-count.php";
+const COUNT_HEADER = "X-Zipofile-Download";
 
 export async function fetchSiteStats(): Promise<SiteStats | null> {
   try {
@@ -19,9 +20,9 @@ export async function fetchSiteStats(): Promise<SiteStats | null> {
   }
 }
 
-/** Best-effort: live server increments stats.json; local dev may 404. */
+/** Best-effort: live server increments api/data/download-stats.json; local dev may 404. */
 export function recordAppDownload(): void {
-  void fetch(COUNT_URL, { method: "POST", keepalive: true })
+  void fetch(COUNT_URL, { method: "POST", keepalive: true, headers: { [COUNT_HEADER]: "1" }, credentials: "same-origin" })
     .then(() => {
       if (typeof window !== "undefined") window.dispatchEvent(new Event("zipofile-download"));
     })
@@ -30,19 +31,11 @@ export function recordAppDownload(): void {
 
 const MILLION = 1_000_000;
 
-/** Progress toward the next million milestone. */
-export function millionGoal(n: number): { label: string; pct: number } {
+/** Progress bar fill toward an internal 1M download tier. */
+export function millionGoal(n: number): { pct: number } {
   const saved = Math.max(0, n);
-  if (saved < MILLION) {
-    return {
-      label: "1 Million",
-      pct: Math.min(100, Math.round((saved / MILLION) * 100)),
-    };
-  }
-  const millions = Math.floor(saved / MILLION);
   const inTier = saved % MILLION;
   return {
-    label: `${millions} Million +`,
     pct: Math.min(100, Math.round((inTier / MILLION) * 100)),
   };
 }

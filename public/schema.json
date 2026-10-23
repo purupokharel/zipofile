@@ -1,0 +1,11 @@
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "ZipoFile",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS",
+  "url": "https://zipofile.com/",
+  "image": "https://zipofile.com/og-image.png",
+  "description": "Zip project folders without node_modules, .git, build output, and caches. Store mode, no compression.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}

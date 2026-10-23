@@ -57,5 +57,5 @@ scripts/release-mac.sh
 scripts/autorelease.sh
 scripts/auto-release.mjs
 
-# Server-only PHP (lives on host, not in public source tree)
-public/api/
+# Rate-limit state written by download-count.php
+public/api/.rate/

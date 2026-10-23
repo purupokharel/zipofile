@@ -1,53 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useMotionOpen } from "../lib/motionOpen";
 import { IconClose } from "./icons";
 
 type Props = {
   open: boolean;
   title: string;
   wide?: boolean;
+  panelClassName?: string;
   onClose: () => void;
   children: React.ReactNode;
 };
 
-const SHEET_ANIM_MS = 700;
-
-export function BottomSheet({ open, title, wide, onClose, children }: Props) {
-  const [mounted, setMounted] = useState(open);
-  const [active, setActive] = useState(open);
+export function BottomSheet({ open, title, wide, panelClassName, onClose, children }: Props) {
   const panelRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      const id = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setActive(true));
-      });
-      return () => cancelAnimationFrame(id);
-    }
-    setActive(false);
-  }, [open]);
-
-  useEffect(() => {
-    if (!mounted || active) return;
-    const el = panelRef.current;
-    const finish = () => setMounted(false);
-    if (!el) {
-      finish();
-      return;
-    }
-    const onEnd = (e: TransitionEvent) => {
-      if (e.target === el && e.propertyName === "transform") {
-        el.removeEventListener("transitionend", onEnd);
-        finish();
-      }
-    };
-    el.addEventListener("transitionend", onEnd);
-    const t = window.setTimeout(finish, SHEET_ANIM_MS + 80);
-    return () => {
-      el.removeEventListener("transitionend", onEnd);
-      clearTimeout(t);
-    };
-  }, [mounted, active]);
+  const { mounted, active } = useMotionOpen(open, panelRef);
 
   useEffect(() => {
     if (!active) return;
@@ -63,7 +29,7 @@ export function BottomSheet({ open, title, wide, onClose, children }: Props) {
       <div className="bottom-sheet-scrim" onClick={onClose} />
       <aside
         ref={panelRef}
-        className={`bottom-sheet-panel${wide ? " bottom-sheet-panel-wide" : ""}`}
+        className={`bottom-sheet-panel${wide ? " bottom-sheet-panel-wide" : ""}${panelClassName ? ` ${panelClassName}` : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}

@@ -82,11 +82,20 @@ There is no Remove button yet.
 
 ## Platforms
 
-- **macOS app:** the **Download** menu and the Download macOS App button on zipofile.com link to a universal build for Intel and Apple Silicon Macs (a .dmg file of about 11 MB). It is signed with an Apple Developer ID certificate and notarized by Apple, with the notarization ticket stapled to both the app and the .dmg, so Gatekeeper accepts it, also offline. macOS may still ask once to confirm opening an app downloaded from the internet. It has been run on an Intel Mac only, not yet on Apple Silicon. From version 1.0.1 the app checks zipofile.com for a newer version when it starts. An update is installed only if its signature matches the key built into the app, and the app then asks to restart.
+- **macOS app:** the **Download** menu and the Download macOS App button on zipofile.com link to a universal build for Intel and Apple Silicon Macs (a .dmg file of about 11 MB). It is signed with an Apple Developer ID certificate and notarized by Apple, with the notarization ticket stapled to both the app and the .dmg, so Gatekeeper accepts it, also offline. The SHA-256 of the .dmg is published in /downloads/release.json and shown next to the download controls. macOS may still ask once to confirm opening an app downloaded from the internet. It has been verified on Intel and Apple Silicon Macs. From version 1.0.1 the app checks zipofile.com for a newer version when it starts. An update is installed only if its signature matches the key built into the app, and the app then asks to restart.
 - **Windows and Linux:** listed as planned in the Download menu. No builds are available.
-- **Website:** zipofile.com is a preview of the app UI plus downloads, counters, and this documentation. It does not read your project folders or write .zip files.
+- **Website:** zipofile.com is a preview of the app UI plus downloads, counters, and this documentation. It does not read your project folders or write .zip files. The site sets Content-Security-Policy, X-Frame-Options DENY, HSTS, and X-Content-Type-Options, and it refuses to run inside another site's frame. Floods and origin overload are handled by the host and CDN, not by this page.
 
 ## Measured example
+
+### Same 1.23 GB project (verified October 2026)
+
+Test folder: about 1.23 GB on disk, a mixed Python, Next.js, PHP, and HTML project with default exclude rules.
+
+- **Apple Silicon:** ZipoFile macOS app, under one second. macOS Compress (built-in Archive Utility) on the same folder, about 12 seconds.
+- **Intel Mac:** ZipoFile, about the same (under one second). macOS Compress on the same folder, about one minute.
+
+### Intel iMac file-count benchmark (warm cache)
 
 Test folder: a Python web app with two small React experiments, 641 MB in 534,355 files. Most are small log and data files, 415,159 of them in one log folder. Machine: one Intel iMac (Xeon W-2140B, 8 cores and 16 threads, 32 GB RAM), with the files already in the disk cache. ZipoFile times are the median of 5 runs, with the range in brackets.
 
@@ -113,7 +122,7 @@ You keep ownership of everything you archive. The macOS app reads your folder an
 
 ## Website
 
-zipofile.com may show a preview of the app interface, download the macOS installer, and display public counters. It does not read project folders on your computer.
+zipofile.com may show a preview of the app interface, download the macOS installer, and display public counters. It does not read project folders on your computer. Download counts accept only same-site POST with a required header, limited per address.
 
 ## Acceptable use
 
@@ -141,13 +150,13 @@ The app sets no cookies and contains no analytics or tracking code.
 
 ## Website
 
-zipofile.com does not store your project files. It may store a public download count when you download the macOS app, and it serves public files such as the installer, version info, and this documentation.
+zipofile.com does not store your project files. It may store a public download count when you download the macOS app from zipofile.com, and it serves public files such as the installer, version info, SHA-256, and this documentation.
 
 ## Network requests
 
-The macOS app uses fonts already installed on your Mac (SF Pro) and loads no third-party fonts. It checks zipofile.com for a newer version when it starts. The website may load the public download counter and add one when you download the app. Share, Buy Coffee, and developer links open the sites named in About and Support. No file names or file contents from your projects are sent.
+The macOS app uses fonts already installed on your Mac (SF Pro) and loads no third-party fonts. It checks zipofile.com for a newer version when it starts. The website may load the public download counter and add one when you download the app, using a same-origin request only. Share, Buy Coffee, and developer links open the sites named in About and Support. No file names or file contents from your projects are sent.
 
-zipofile.com's host may keep standard request logs (IP address, browser user agent), like any website.
+zipofile.com's host and CDN may keep standard request logs (IP address, browser user agent) and absorb traffic floods. The page itself cannot stop a DDoS.
 
 ## Third parties
 

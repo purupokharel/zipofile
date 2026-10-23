@@ -1,6 +1,7 @@
 import { DOWNLOADS } from "../content/downloads";
 import { recordAppDownload } from "../lib/downloadStats";
 import { safeAppPath } from "../lib/safeUrl";
+import { DmgChecksum } from "./DmgChecksum";
 
 export function WebDemoSheet() {
   const mac = DOWNLOADS.find((d) => d.available && d.id === "macos");
@@ -27,6 +28,7 @@ export function WebDemoSheet() {
         </a>
       )}
       <p className="hint">Intel and Apple Silicon · Signed And Notarized by Apple</p>
+      <DmgChecksum />
     </div>
   );
 }

@@ -39,6 +39,11 @@ export function formatSavedOver(savedMs: number, totalBytes: number): string {
   return `${m}m ${(s % 60).toString().padStart(2, "0")}s saved over ${formatBytes(totalBytes)}`;
 }
 
+/** Shown on stats / preview cards — time not archive size. */
+export function formatTimeSavedVsZip(savedMs: number): string {
+  return `${formatDuration(savedMs)} Saved vs Zip -r -0`;
+}
+
 export function etaFromRate(done: number, total: number | null, elapsedMs: number): number | null {
   if (!total || done <= 0 || done >= total) return null;
   const rate = done / elapsedMs;

@@ -6,6 +6,7 @@ import { resolveMacDownloadUrl } from "../lib/macDownloadUrl";
 import { isTauri } from "../lib/platform";
 import { safeAppPath, safeExternalHref } from "../lib/safeUrl";
 import { BottomSheet } from "./BottomSheet";
+import { DmgChecksum } from "./DmgChecksum";
 import { IconDownload } from "./icons";
 
 const MOBILE_SHEET_MQ = "(max-width: 760px)";
@@ -26,6 +27,7 @@ function useDownloadSheetMode() {
 function DownloadMenuItems({ onActivate }: { onActivate: () => void }) {
   return (
     <>
+      <DmgChecksum />
       {DOWNLOADS.map((d) => {
         if (!d.available) {
           return (

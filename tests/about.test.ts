@@ -55,6 +55,12 @@ describe("public copy uses no real project or folder names", () => {
     expect(text).not.toMatch(/everest|pageinvoice|marketxed|knverter/i);
   });
   it("measured example matches the recorded benchmark", () => {
+    expect(about).toContain("1.23 GB");
+    expect(about).toContain("under one second");
+    expect(about).toContain("about 12 seconds");
+    expect(about).toContain("about one minute");
+    expect(about).toContain("Apple Silicon");
+    expect(about).toContain("Intel Mac:");
     expect(about).toContain("534,355 files");
     expect(about).toContain("528,950 files (541.6 MB)");
     expect(about).toContain("15.3 seconds (15.2 to 17.1)");
@@ -78,7 +84,7 @@ describe("About describes the skip list as implemented", () => {
     const { DOWNLOADS } = await import("../src/content/downloads");
     expect(about).toContain("**Download** menu");
     expect(about).toContain("signed with an Apple Developer ID certificate and notarized by Apple");
-    expect(about).toContain("run on an Intel Mac only, not yet on Apple Silicon");
+    expect(about).toContain("verified on Intel and Apple Silicon Macs");
     expect(about).toContain("signature matches the key built into the app");
     expect(about).not.toMatch(/right-click the app|not signed or notarized/i);
     for (const d of DOWNLOADS) if (!d.available) expect(d.label).toMatch(/\(planned\)$/);

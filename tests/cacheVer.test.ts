@@ -10,4 +10,11 @@ describe("cache ver stamp", () => {
     expect(out).toContain('/assets/index-SSQKpKQo.js?v=11');
     expect(out).toContain('/assets/index-9992zIfn.css?v=11');
   });
+
+  it("stamps schema.json", () => {
+    expect(stampCacheVerHtml('<script type="application/ld+json" src="/schema.json"></script>', 18)).toContain(
+      'src="/schema.json?v=18"',
+    );
+  });
 });
+

@@ -1,11 +1,11 @@
 // Stamps ?v= from public/cache.json onto asset refs in index.html and dist/index.html
 // (same rules as dev-tools/launcher/cache.py). Run after vite build so the launcher cache table stays green.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { projectRoot } from "./source-hash.mjs";
 
 const REF =
-  /(?<attr>src|href)="(?<url>(?:\/src\/main\.tsx|\/assets\/[^"?]+|\/(?:favicon\.ico|icon-32\.png|apple-touch-icon\.png|site\.webmanifest)))(?:\?v=\d+)?"/g;
+  /(?<attr>src|href)="(?<url>(?:\/src\/main\.tsx|\/assets\/[^"?]+|\/(?:favicon\.ico|icon-32\.png|apple-touch-icon\.png|site\.webmanifest|schema\.json)))(?:\?v=\d+)?"/g;
 
 export function readCacheVer(root = projectRoot()) {
   try {
@@ -22,6 +22,9 @@ export function stampCacheVerHtml(html, v) {
 
 export function applyCacheVer(root = projectRoot(), v = readCacheVer(root)) {
   const n = Math.max(1, Number.parseInt(String(v), 10) || 1);
+  const study = join(root, "casestudy.md");
+  const pubStudy = join(root, "public/casestudy.md");
+  if (existsSync(study)) copyFileSync(study, pubStudy);
   let changed = 0;
   for (const rel of ["index.html", "dist/index.html"]) {
     const path = join(root, rel);

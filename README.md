@@ -5,7 +5,7 @@
 | Resource | URL |
 | -------- | --- |
 | Website (UI preview, docs, download page) | [zipofile.com](https://zipofile.com) |
-| macOS installer & release notes | [GitHub Releases](https://github.com/purupokharel/zipofile/releases) |
+| macOS installer & release notes | [GitHub Releases](https://github.com/purupokharel/zipofile/releases) · [CHANGELOG](CHANGELOG.md) · [Case study](casestudy.md) |
 | Latest macOS build (when published) | `ZipoFile_v2_1.dmg` — universal (Intel and Apple Silicon) |
 
 ![ZipoFile](public/Screenshot.png)
@@ -93,7 +93,9 @@ To build the macOS app, use the maintainer release workflow (not included in thi
 
 ## Measured example (macOS)
 
-On one Intel iMac, a 641 MB test tree (534k files, mostly small logs):
+**Same ~1.23 GB project (verified October 2026):** mixed Python / Next.js / PHP / HTML — ZipoFile **under one second** on **Apple Silicon** and **Intel Mac** (about the same). macOS **Compress** on that folder: **~12 seconds** (Apple Silicon), **~one minute** (Intel).
+
+**Intel iMac (warm cache):** 641 MB test tree (534k files, mostly small logs):
 
 | Scenario | Approx. time | Notes |
 | -------- | ------------ | ----- |

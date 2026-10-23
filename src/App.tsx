@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AddProjectPanel } from "./components/AddProjectPanel";
 import { BottomSheet } from "./components/BottomSheet";
+import { CollapsibleHeight } from "./components/CollapsibleHeight";
+import { EmptyArchivesView } from "./components/EmptyArchivesView";
+import { SamplePreviewStage } from "./components/SamplePreviewStage";
 import { CommunityStats } from "./components/CommunityStats";
 import { DeveloperSheet } from "./components/DeveloperSheet";
 import { DownloadMenu } from "./components/DownloadMenu";
 import { WebDemoSheet } from "./components/WebDemoSheet";
 import { SheetMarkdown } from "./components/SheetMarkdown";
+import { UpdateNotifyButton } from "./components/UpdateNotifyButton";
 import { UpdatePrompt } from "./components/UpdatePrompt";
-import { IconApple, IconArchive, IconBrandLogo, IconClose, IconCoffee, IconDoc, IconExtract, IconGitHub, IconInfo, IconLock, IconNavExpand, IconNavFolder, IconPlus, IconSearch, IconShare, IconShowInFinder, IconSidebarPlus, IconSidebarSearch, IconTrash, IconWindowClose, IconWinPlus, IconZip } from "./components/icons";
-import { WEB_SAMPLE_ARCHIVES, WEB_SAMPLE_ARCHIVE_TOTAL_BYTES } from "./content/sampleArchives";
+import { IconApple, IconArchive, IconBrandLogo, IconClose, IconCoffee, IconDoc, IconExtract, IconGitHub, IconInfo, IconLock, IconNavExpand, IconNavFolder, IconPlus, IconSearch, IconShare, IconShowInFinder, IconSidebarPlus, IconSidebarSearch, IconTrash, IconWindowClose, IconWinPlus } from "./components/icons";
+import { WEB_SAMPLE_ARCHIVES } from "./content/sampleArchives";
 import { REFRESH_WARNING, SAMPLE_ARCHIVE_DEMO, SHEETS, TRASH_CONFIRM_TITLE, trashConfirmBody, type SampleArchiveDemoId } from "./content/sheets";
 
 const ARCHIVE_SESSION_KEY = "zipofi-archiving";
@@ -16,12 +20,12 @@ import { DOWNLOADS, GITHUB_REPO_URL } from "./content/downloads";
 import { DISPLAY_VERSION_EVENT, fetchDisplayVersion } from "./lib/displayVersion";
 import { recordAppDownload } from "./lib/downloadStats";
 import { isTauri } from "./lib/platform";
-import { externalLinkRel, safeAppPath, safeExternalHref, safeGitHubRepoHref } from "./lib/safeUrl";
+import { externalLinkRel, safeAppPath, safeGitHubRepoHref } from "./lib/safeUrl";
 import { downloadZip, listProjects, removeProject, unzipProject, validateSkipField, zipProjectFromPicker } from "./lib/projects";
 import { splitField } from "./lib/skipList";
 import { ZipProgressBar } from "./components/ZipProgressBar";
 import { SIDEBAR_RECENT_COUNT, sidebarArchiveEntries, sidebarArchiveRatio } from "./lib/sidebarArchives";
-import { formatDuration } from "./lib/zipProgress";
+import { formatDuration, lifetimeSavedMs } from "./lib/zipProgress";
 import type { ProjectEntry, SheetId, ZipProgress } from "./types";
 
 
@@ -95,6 +99,9 @@ export default function App() {
   const [trashConfirm, setTrashConfirm] = useState<{ entry: ProjectEntry; sample: boolean } | null>(null);
   const [sampleDemo, setSampleDemo] = useState<SampleArchiveDemoId | null>(null);
   const [sidebarArchivesExpanded, setSidebarArchivesExpanded] = useState(false);
+  const [sublistExpanded, setSublistExpanded] = useState(false);
+  const sublistCollapseMeasureRef = useRef<HTMLDivElement>(null);
+  const [sublistCollapseHeight, setSublistCollapseHeight] = useState<number | null>(null);
   const [spotlightId, setSpotlightId] = useState<string | null>(null);
   const archiving =
     zipping && zipProgress != null && zipProgress.phase !== "done" && zipProgress.phase !== "picking";
@@ -257,7 +264,17 @@ export default function App() {
   const visibleSampleArchives = WEB_SAMPLE_ARCHIVES.filter((p) => !removedSampleIds.includes(p.id));
   const archiveList = showingSampleArchives ? visibleSampleArchives : samplePreview ? [] : projects;
   const allSidebarArchives = samplePreview ? visibleSampleArchives : projects;
-  const sidebarArchives = sidebarArchiveEntries(allSidebarArchives, sidebarArchivesExpanded);
+  useLayoutEffect(() => {
+    if (sidebarArchivesExpanded) {
+      setSublistExpanded(true);
+      setSublistCollapseHeight(null);
+      return;
+    }
+    const h = sublistCollapseMeasureRef.current?.getBoundingClientRect().height;
+    if (h != null) setSublistCollapseHeight(h);
+  }, [sidebarArchivesExpanded, allSidebarArchives.length]);
+
+  const sidebarArchives = sidebarArchiveEntries(allSidebarArchives, sublistExpanded);
   const sidebarRatio =
     allSidebarArchives.length > 0
       ? sidebarArchiveRatio(
@@ -283,6 +300,25 @@ export default function App() {
       <span className="foot-link-label">{label}</span>
     </button>
   );
+  const footGitHub =
+    GITHUB_HREF ?
+      <a
+        href={GITHUB_HREF}
+        className="nav-item foot-ext-link"
+        aria-label="GitHub repository"
+        target="_blank"
+        rel={externalLinkRel}
+        referrerPolicy="no-referrer"
+        onClick={(e) => {
+          if (!isTauri()) return;
+          e.preventDefault();
+          void import("@tauri-apps/api/core").then(({ invoke }) => invoke("open_external", { url: GITHUB_HREF }));
+        }}
+      >
+        <span className="foot-icon" aria-hidden><IconGitHub /></span>
+        <span className="foot-link-label">GitHub</span>
+      </a>
+    : null;
 
   return (
     <div className={`app${isTauri() ? " tauri" : ""}`}>
@@ -334,28 +370,48 @@ export default function App() {
                 <IconNavExpand />
               </button>
             </div>
-            {sidebarArchives.length > 0 && (
-              <div className="nav-sublist" role="group" aria-label={sidebarArchivesExpanded ? "All archives" : "Recent archives"}>
-                {sidebarArchives.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`nav-sub${spotlightId === p.id ? " active" : ""}`}
-                    title={p.name}
-                    onClick={() => focusArchiveInList(p.id)}
-                  >
-                    <span className="nav-sub-icon" aria-hidden>
-                      <IconNavFolder />
-                    </span>
+            <div ref={sublistCollapseMeasureRef} className="nav-sublist-measure" aria-hidden>
+              <div className="nav-sublist">
+                {sidebarArchiveEntries(allSidebarArchives, false).map((p) => (
+                  <span key={p.id} className="nav-sub">
                     <span className="nav-sub-label">{p.name}</span>
-                  </button>
+                  </span>
                 ))}
               </div>
-            )}
+            </div>
+            <div className="nav-sublist-scroll">
+              {sidebarArchives.length > 0 && (
+                <CollapsibleHeight
+                  className="nav-sublist-collapse"
+                  measureKey={sidebarArchivesExpanded}
+                  collapseHeight={sublistCollapseHeight}
+                  onCollapseTransitionEnd={() => setSublistExpanded(false)}
+                >
+                  <div className="nav-sublist" role="group" aria-label={sidebarArchivesExpanded ? "All archives" : "Recent archives"}>
+                    {sidebarArchives.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={`nav-sub${spotlightId === p.id ? " active" : ""}`}
+                        title={p.name}
+                        onClick={() => focusArchiveInList(p.id)}
+                      >
+                        <span className="nav-sub-icon" aria-hidden>
+                          <IconNavFolder />
+                        </span>
+                        <span className="nav-sub-label">{p.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </CollapsibleHeight>
+              )}
+            </div>
           </div>
         </nav>
         <div className="side-foot">
           <div className="foot-links">
+            {footLink("about", "About", <IconInfo />)}
+            {footGitHub}
             {footLink("terms", "Terms", <IconDoc />)}
             {footLink("privacy", "Privacy", <IconLock />)}
             <DownloadMenu />
@@ -371,38 +427,10 @@ export default function App() {
       <main className="content">
         <div className="drag" data-tauri-drag-region />
         <div className="win-actions">
-          <button
-            type="button"
-            className={`side-icon win-about${sheet === "about" && !addOpen ? " on" : ""}`}
-            aria-label="About"
-            title="About"
-            onClick={() => { setAddOpen(false); openSheet("about"); }}
-          >
-            <IconInfo />
-          </button>
+          <UpdateNotifyButton />
           <button type="button" className="side-icon win-share" aria-label="Share" title="Share" onClick={() => void shareZipofi(setMessage)}>
             <IconShare />
           </button>
-          {GITHUB_HREF && (
-            <a
-              href={GITHUB_HREF}
-              className="side-icon win-github"
-              aria-label="GitHub repository"
-              title="GitHub"
-              target="_blank"
-              rel={externalLinkRel}
-              referrerPolicy="no-referrer"
-              onClick={(e) => {
-                if (!isTauri()) return;
-                e.preventDefault();
-                void import("@tauri-apps/api/core").then(({ invoke }) =>
-                  invoke("open_external", { url: GITHUB_HREF }),
-                );
-              }}
-            >
-              <IconGitHub />
-            </a>
-          )}
           <button
             type="button"
             className={`side-icon${isTauri() ? "" : " win-plus"}`}
@@ -463,63 +491,39 @@ export default function App() {
             </div>
           )}
           {loading ? null : samplePreview ? (
-            showingSampleArchives ? (
-              <ul className="list card">
-                {shown.map((p) => (
-                  <li key={p.id} id={"a-" + p.id} className={rowClass(p.id)}>
-                    <span className="row-icon"><IconArchive /></span>
-                    <div className="row-main">
-                      <strong>{p.name}</strong>
-                      <span>
-                        {formatDate(p.zippedAt)}
-                        {p.zipMs != null ? ` · zipped in ${formatDuration(p.zipMs)}` : ""}
-                        {" · sample preview"}
-                      </span>
-                    </div>
-                    <button type="button" className="btn row-action" aria-label="Extract" onClick={() => { clearSpotlight(); setSampleDemo("extract"); }}>
-                      <IconExtract /><span className="btn-label">Extract</span>
-                    </button>
-                    <button type="button" className="btn row-action" aria-label="Show in Finder" onClick={() => { clearSpotlight(); setSampleDemo("finder"); }}>
-                      <IconShowInFinder /><span className="btn-label">Show in Finder</span>
-                    </button>
-                    <button type="button" className="btn row-action" aria-label="Trash" onClick={() => requestTrash(p, true)}>
-                      <IconTrash /><span className="btn-label">Trash</span>
-                    </button>
-                  </li>
-                ))}
-                {shown.length === 0 && <li className="row muted">No results for “{query}”.</li>}
-              </ul>
-            ) : (
-              !zipping && (
-                <div className="empty">
-                  <span className="empty-icon"><IconZip /></span>
-                  <h2>No Archives</h2>
-                  <p className="empty-lead">
-                    Zip a project folder faster without node_modules, .git,
-                    <br />
-                    build output, or caches. Keep the app yours forever.
-                  </p>
-                  <button type="button" className="btn primary" disabled={zipping} onClick={openNewArchive}>
-                    <IconPlus /> New Archive
-                  </button>
-                </div>
-              )
-            )
+            <SamplePreviewStage
+              open={showingSampleArchives}
+              empty={!zipping ? <EmptyArchivesView zipping={zipping} onNewArchive={openNewArchive} /> : null}
+              list={
+                <ul className="list card">
+                  {shown.map((p) => (
+                    <li key={p.id} id={"a-" + p.id} className={rowClass(p.id)}>
+                      <span className="row-icon"><IconArchive /></span>
+                      <div className="row-main">
+                        <strong>{p.name}</strong>
+                        <span>
+                          {formatDate(p.zippedAt)}
+                          {p.zipMs != null ? ` · zipped in ${formatDuration(p.zipMs)}` : ""}
+                          {" · sample preview"}
+                        </span>
+                      </div>
+                      <button type="button" className="btn row-action" aria-label="Extract" onClick={() => { clearSpotlight(); setSampleDemo("extract"); }}>
+                        <IconExtract /><span className="btn-label">Extract</span>
+                      </button>
+                      <button type="button" className="btn row-action" aria-label="Show in Finder" onClick={() => { clearSpotlight(); setSampleDemo("finder"); }}>
+                        <IconShowInFinder /><span className="btn-label">Show in Finder</span>
+                      </button>
+                      <button type="button" className="btn row-action" aria-label="Trash" onClick={() => requestTrash(p, true)}>
+                        <IconTrash /><span className="btn-label">Trash</span>
+                      </button>
+                    </li>
+                  ))}
+                  {shown.length === 0 && <li className="row muted">No results for “{query}”.</li>}
+                </ul>
+              }
+            />
           ) : projects.length === 0 ? (
-            !zipping && (
-              <div className="empty">
-                <span className="empty-icon"><IconZip /></span>
-                <h2>No Archives</h2>
-                <p className="empty-lead">
-                  Zip a project folder faster without node_modules, .git,
-                  <br />
-                  build output, or caches. Keep the app yours forever.
-                </p>
-                <button type="button" className="btn primary" disabled={zipping} onClick={openNewArchive}>
-                  <IconPlus /> New Archive
-                </button>
-              </div>
-            )
+            !zipping && <EmptyArchivesView zipping={zipping} onNewArchive={openNewArchive} />
           ) : (
             <ul className="list card">
               {shown.map((p) => (
@@ -565,7 +569,7 @@ export default function App() {
               <CommunityStats
                 previewArchives={{
                   count: WEB_SAMPLE_ARCHIVES.length,
-                  totalBytes: WEB_SAMPLE_ARCHIVE_TOTAL_BYTES,
+                  totalSavedMs: lifetimeSavedMs(WEB_SAMPLE_ARCHIVES),
                   open: previewArchivesOpen,
                   onToggle: () => {
                     setPreviewArchivesOpen((v) => {

@@ -3,6 +3,7 @@
 // package.json, package-lock.json (root entries), src-tauri/tauri.conf.json,
 // src-tauri/Cargo.toml ([package]), src-tauri/Cargo.lock (zipofi entry).
 // The UI reads the version from package.json at build time (src/content/downloads.ts).
+// After bumping, add a dated section to CHANGELOG.md and use it for GitHub release notes.
 // Two-part versions only: major.minor with minor 0–9; 1.9 → 2.0, 2.9 → 3.0, etc.
 //   node scripts/bump-version.mjs patch     # 1.0 -> 1.1, 1.9 -> 2.0
 //   node scripts/bump-version.mjs 2.3     # explicit
@@ -58,6 +59,22 @@ export function nextPatch(v) {
 export function toSemver(displayVersion) {
   const v = normalizeVersion(displayVersion);
   return `${v}.0`;
+}
+
+/** CFBundleShortVersionString (semver) vs release.json / package display version. */
+export function appVersionMatchesRelease(displayVersion, bundleVersion) {
+  const display = normalizeVersion(displayVersion);
+  const app = String(bundleVersion ?? "").trim();
+  if (!app) return false;
+  if (app === display || app === toSemver(display)) return true;
+  if (/^\d+\.\d+\.\d+$/.test(app)) {
+    try {
+      return normalizeVersion(fromLegacyVersion(app)) === display;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 function replaceOnce(file, re, to) {

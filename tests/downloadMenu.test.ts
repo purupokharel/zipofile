@@ -19,6 +19,7 @@ const key = (el: Element | Document, k: string) =>
   act(() => void el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true })));
 
 beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
@@ -27,6 +28,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   host.remove();
+  vi.unstubAllGlobals();
 });
 
 describe("header Download menu", () => {
@@ -108,7 +110,6 @@ describe("Download menu in the desktop app", () => {
       expect(readFileSync(join(__dirname, "../src-tauri/src/lib.rs"), "utf8")).toContain("https://zipofile.com/downloads/");
     } finally {
       delete w.__TAURI_INTERNALS__;
-      vi.unstubAllGlobals();
     }
   });
 });

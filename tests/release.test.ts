@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { inputFiles, isInput, sourceHash } from "../scripts/source-hash.mjs";
 import { checkReleaseFresh } from "../scripts/check-release-fresh.mjs";
 import { verifyUpdaterSignature } from "../scripts/verify-updater-sig.mjs";
-import { nextPatch, toSemver } from "../scripts/bump-version.mjs";
+import { appVersionMatchesRelease, nextPatch, toSemver } from "../scripts/bump-version.mjs";
 import { versionedDmgFileName } from "../scripts/dmg-name.mjs";
 import { APP_VERSION } from "../src/content/downloads";
 
@@ -120,6 +120,11 @@ describe("versions and updater config", () => {
   it("maps display version to Tauri semver", () => {
     expect(toSemver("2.1")).toBe("2.1.0");
     expect(toSemver("1.9")).toBe("1.9.0");
+  });
+  it("matches DMG bundle version to display release version", () => {
+    expect(appVersionMatchesRelease("2.1", "2.1.0")).toBe(true);
+    expect(appVersionMatchesRelease("2.1", "2.1")).toBe(true);
+    expect(appVersionMatchesRelease("2.1", "2.2.0")).toBe(false);
   });
   it("configures the signed updater feed", () => {
     const conf = JSON.parse(readFileSync(join(ROOT, "src-tauri/tauri.conf.json"), "utf8"));
